@@ -60,7 +60,8 @@ label{font-size:13px;color:var(--mu);display:block;margin:10px 0 4px}
 .tag{font-size:11px;background:var(--card2);color:var(--mu);border-radius:8px;padding:2px 7px;display:inline-block;margin:2px 4px 0 0}
 .tag.g{background:#4A3A12;color:var(--gold2)}
 .sheet-bg{position:fixed;inset:0;background:rgba(10,4,20,.72);z-index:70;display:flex;align-items:flex-end;animation:fade .15s}
-.sheet{background:#1B0F2E;border-radius:22px 22px 0 0;width:100%;max-height:92%;overflow-y:auto;padding:18px 16px calc(20px + var(--sb));animation:up .2s ease-out;overscroll-behavior:contain}
+.sheet{position:relative;background:#1B0F2E;border-radius:22px 22px 0 0;width:100%;max-height:92%;overflow-y:auto;padding:18px 16px calc(20px + var(--sb));animation:up .2s ease-out;overscroll-behavior:contain}
+.sx{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:0;background:var(--card2);color:var(--tx);display:flex;align-items:center;justify-content:center;z-index:2}.sx svg{width:20px;height:20px}
 .grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:-6px auto 12px}
 @keyframes up{from{transform:translateY(40px);opacity:.5}}@keyframes fade{from{opacity:0}}
 .player{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;padding:calc(10px + var(--st)) 16px calc(14px + var(--sb))}
@@ -692,7 +693,18 @@ function checkMedals(){const nuove=[];MEDALS.forEach(([id,n,,f])=>{if(!S.medals[
 let TAB='home',LIBCAT='tutti',PROGM='peso',WEEKOFF=0;
 const TABS=[['home','Home','home'],['week','Settimana','cal'],['lib','Esercizi','list'],['prog','Progressi','chart'],['body','Corpo','ruler']];
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
-function sheet(html,onMount){const bg=document.createElement('div');bg.className='sheet-bg';bg.innerHTML=`<div class="sheet"><div class="grab"></div>${html}</div>`;bg.addEventListener('click',e=>{if(e.target===bg)bg.remove()});document.body.appendChild(bg);const close=()=>bg.remove();onMount&&onMount(bg.firstChild,close);return close}
+/* tasto indietro del telefono */
+const LAYERS=[];let skipPop=0,pendClose=0,qPush=0,flushT=null;
+const hpush=()=>{try{history.pushState({stf:1},'')}catch(e){}};
+function flushQ(){skipPop=0;while(qPush>0){qPush--;hpush()}}
+function openLayer(fn){const L={fn};LAYERS.push(L);if(skipPop>0||pendClose>0)qPush++;else hpush();return L}
+function closeLayer(L){const i=LAYERS.indexOf(L);if(i<0)return;LAYERS.splice(i,1);if(pendClose++===0)queueMicrotask(()=>{const n=pendClose;pendClose=0;skipPop=1;clearTimeout(flushT);flushT=setTimeout(flushQ,800);try{history.go(-n)}catch(e){flushQ()}})}
+window.addEventListener('popstate',()=>{if(skipPop>0){clearTimeout(flushT);flushQ();return}const L=LAYERS.pop();if(L)L.fn()});
+let tabL=null;
+function goTab(k){if(k===TAB){render();return}if(TAB==='home'&&k!=='home'&&!tabL){tabL=openLayer(()=>{tabL=null;TAB='home';render()})}else if(k==='home'&&tabL){closeLayer(tabL);tabL=null}TAB=k;render()}
+function sheet(html,onMount){const bg=document.createElement('div');bg.className='sheet-bg';bg.innerHTML=`<div class="sheet"><button class="sx" aria-label="Chiudi">${I('x')}</button><div class="grab"></div>${html}</div>`;
+ const remove=()=>bg.remove();const L=openLayer(remove);const close=()=>{if(!bg.isConnected)return;remove();closeLayer(L)};
+ bg.addEventListener('click',e=>{if(e.target===bg)close()});bg.querySelector('.sx').onclick=close;document.body.appendChild(bg);onMount&&onMount(bg.firstChild,close);return close}
 function confirmBox(msg,yes,cb){sheet(`<h2 style="margin-top:0">${esc(msg)}</h2><div class="grid2"><button class="btn sec" data-n>Annulla</button><button class="btn danger" data-y>${esc(yes)}</button></div>`,(el,close)=>{el.querySelector('[data-n]').onclick=close;el.querySelector('[data-y]').onclick=()=>{close();cb()}})}
 function render(){
  if(!S.name||!S.level){$('#tabs').style.display='none';return onboarding()}
@@ -701,7 +713,7 @@ function render(){
  const m=$('#main');m.scrollTop=0;
  ({home:vHome,week:vWeek,lib:vLib,prog:vProg,body:vBody})[TAB](m);
 }
-document.addEventListener('click',e=>{unlockAudio();const t=e.target.closest('[data-tab]');if(t){TAB=t.dataset.tab;render()}},true);
+document.addEventListener('click',e=>{unlockAudio();const t=e.target.closest('[data-tab]');if(t){goTab(t.dataset.tab)}},true);
 
 /* ---------- onboarding e test ---------- */
 function onboarding(){
@@ -725,14 +737,15 @@ function testView(m,first){
  <div class="card"><div class="row" style="align-items:flex-start"><div style="width:96px;flex:none" class="figbox">${staticFig(EXM.stretchfem,1)}</div><div><h3>4 · Mobilità</h3><div class="small mu">Gambe tese, ti pieghi in avanti: tocchi i piedi con le dita?</div></div></div>
  <div class="seg" style="margin-top:10px" id="mob"><button data-m="si">Sì</button><button data-m="quasi" class="on">Quasi</button><button data-m="no">No</button></div></div>
  <button class="btn" id="calc">Calcola il mio livello</button><button class="btn ghost" id="manual" style="margin-top:10px">Scelgo io il livello</button>`;
- if(!first)$('#bk').onclick=render;
+ const TL=first?null:openLayer(()=>render());
+ if(!first)$('#bk').onclick=()=>{closeLayer(TL);render()};
  let mob='quasi';
  m.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mob=b.dataset.m;m.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b))});
  m.querySelectorAll('[data-inc],[data-dec]').forEach(b=>b.onclick=()=>{const id=b.dataset.inc||b.dataset.dec;const i=$('#t_'+id);const st=id==='plank'?5:1;i.value=Math.max(0,(+i.value||0)+(b.dataset.inc?st:-st))});
  const finish=(lv,t)=>{S.level=lv;if(t)S.tests.push(t);if(first)S.start=today();save();const nm=checkMedals();
   m.innerHTML=`<div style="padding-top:40px;text-align:center"><div class="gold" style="font:700 22px 'Barlow Condensed',sans-serif">IL TUO LIVELLO</div><div style="font:700 64px 'Barlow Condensed',sans-serif">${['','PRINCIPIANTE','INTERMEDIO','AVANZATO'][lv]}</div>
   <p class="mu">Gli allenamenti si adattano a questo livello e crescono ogni settimana per 5 settimane, poi una settimana più leggera.</p>${nm.length?`<p class="gold">${I('medal')} Medaglia: ${esc(nm.join(', '))}</p>`:''}<button class="btn" id="ok">Vai alla home</button></div>`;
-  $('#ok').onclick=()=>{TAB='home';render()}};
+  $('#ok').onclick=()=>{if(TL)closeLayer(TL);goTab('home')}};
  $('#calc').onclick=()=>{const p=+$('#t_push').value||0,q=+$('#t_squat').value||0,k=+$('#t_plank').value||0;
   const sc=[p<10?1:p<25?2:3,q<30?1:q<45?2:3,k<45?1:k<90?2:3,mob==='si'?3:mob==='quasi'?2:1];
   const lv=clamp(Math.round(sc.reduce((a,b)=>a+b)/4),1,3);finish(lv,{date:today(),push:p,squat:q,plank:k,mob,level:lv})};
@@ -779,7 +792,7 @@ function vHome(m){
  $('#pausa').onclick=()=>startPlayer(buildPausa(),{kind:'pausa'});
  $('#calcio').onclick=()=>calcioForm();
  $('#set').onclick=settings;
- if($('#setw'))$('#setw').onclick=()=>{TAB='week';WEEKOFF=0;render()};
+ if($('#setw'))$('#setw').onclick=()=>{WEEKOFF=0;goTab('week')};
  if($('#rt'))$('#rt').onclick=()=>testView($('#main'),false);
  if($('#dism'))$('#dism').onclick=()=>{S.dismissInstall=true;save();render()};
 }
@@ -809,7 +822,7 @@ async function keepAwake(on){try{if(on&&navigator.wakeLock)wakeLock=await naviga
 function startPlayer(steps,meta){
  unlockAudio();keepAwake(true);
  const el=document.createElement('div');el.className='player';document.body.appendChild(el);
- PL={mass:{},steps,meta,i:0,rem:steps[0].secs,paused:false,last:performance.now(),el,start:Date.now(),lastBeep:-1,halfDone:false,worked:0};
+ PL={layer:openLayer(playerBack),mass:{},steps,meta,i:0,rem:steps[0].secs,paused:false,last:performance.now(),el,start:Date.now(),lastBeep:-1,halfDone:false,worked:0};
  el.innerHTML=`<div class="row between"><button class="chip" id="px" aria-label="Chiudi">${I('x')}</button><span class="small mu" id="plab"></span><span class="small mu" id="pcount"></span></div>
  <div class="pbar" style="margin:10px 0"><i id="ppr"></i></div>
  <div id="ptitle" style="font:700 28px 'Barlow Condensed',sans-serif;text-align:center"></div>
@@ -825,6 +838,7 @@ function startPlayer(steps,meta){
  el.querySelector('#pprev').onclick=()=>goStep(Math.max(0,PL.i-(PL.steps[PL.i].type==='work'?2:1)));
  goStep(0);PL.timer=setInterval(tickPlayer,100);
 }
+function playerBack(){if(!PL)return;PL.layer=openLayer(playerBack);if(document.querySelector('.sheet-bg'))return;PL.el.querySelector('#px').click()}
 function goStep(i){
  if(i>=PL.steps.length)return finishPlayer(false);
  PL.i=i;const s=PL.steps[i];PL.rem=s.secs;PL.lastBeep=-1;PL.halfDone=false;PL.last=performance.now();
@@ -870,7 +884,7 @@ function tickPlayer(){
  if(s.type==='work'&&PL.fig){const el=s.secs-PL.rem;const per=s.ex.side?s.secs/2:s.secs;PL.fig.t0=now-(el%per)*1000}
  renderTime();
 }
-function closePlayer(){if(!PL)return;clearInterval(PL.timer);PL.el.remove();PL=null;keepAwake(false);render()}
+function closePlayer(){if(!PL)return;if(PL.layer)closeLayer(PL.layer);clearInterval(PL.timer);PL.el.remove();PL=null;keepAwake(false);render()}
 function finishPlayer(partial){
  clearInterval(PL.timer);keepAwake(false);
  const min=Math.max(1,Math.round((Date.now()-PL.start)/60000));const meta=PL.meta;const el=PL.el;
