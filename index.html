@@ -708,8 +708,9 @@ function onboarding(){
  const m=$('#main');
  if(!S.name){m.innerHTML=`<div style="padding-top:30px"><div class="logo" style="justify-content:center;margin-bottom:18px"><span style="width:96px;height:96px;display:block;border-radius:22px;overflow:hidden">${LOGO}</span></div>
  <h1 style="text-align:center;font-size:40px">SHOWTIME <span class="gold">FIT</span></h1><p class="mu" style="text-align:center">Allenamenti a corpo libero pensati per chi guida tante ore e gioca a calcio.</p>
- <label>Come ti chiami?</label><input id="nm" autocomplete="given-name" placeholder="Il tuo nome"><div style="height:14px"></div><button class="btn" id="go">Iniziamo ${I('chev')}</button>
+ <label>Come ti chiami?</label><input id="nm" autocomplete="given-name" placeholder="Il tuo nome"><div style="height:14px"></div><button class="btn" id="go">Iniziamo ${I('chev')}</button><button class="btn ghost" id="imp" style="margin-top:10px">Ho un backup da importare</button>
  <p class="dim small" style="margin-top:14px">I dati restano salvati sul tuo telefono. L'app funziona anche senza internet.</p></div>`;
+ $('#imp').onclick=importSheet;
  $('#go').onclick=()=>{const v=$('#nm').value.trim();if(!v){$('#nm').focus();$('#nm').style.outline='2px solid #F09595';return}S.name=v;save();render()};return}
  testView(m,true);
 }
@@ -1003,6 +1004,7 @@ function measForm(){
 }
 
 /* ---------- IMPOSTAZIONI ---------- */
+function importSheet(){sheet(`<h2 style="margin-top:0">Importa backup</h2><p class="small mu">Nell'altra versione dell'app: Impostazioni → Copia backup. Poi incolla qui.</p><textarea id="bt" rows="6" placeholder="Incolla qui il testo del backup"></textarea><div style="height:10px"></div><button class="btn" id="bgo">Importa</button>`,(e2,c2)=>{e2.querySelector('#bgo').onclick=()=>{try{const o=JSON.parse(e2.querySelector('#bt').value);if(!o||!o.name)throw 0;S={...DEF(),...o};save();c2();render();toast('Backup importato')}catch(x){toast('Testo del backup non valido')}}})}
 function settings(){
  sheet(`<h2 style="margin-top:0">Impostazioni</h2>
  <label>Nome</label><input id="sn" value="${esc(S.name)}">
@@ -1019,7 +1021,7 @@ function settings(){
   el.querySelector('#sv').onclick=e=>{S.set.vib=!S.set.vib;e.currentTarget.classList.toggle('on',S.set.vib);vib(100)};
   el.querySelector('#srest').onclick=()=>{S.start=today();save();toast('Programma ripartito dalla settimana 1')};
   el.querySelector('#bcopy').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(S));toast('Backup copiato: incollalo in una nota per conservarlo')}catch(e){toast('Copia non riuscita su questo browser')}};
-  el.querySelector('#bimp').onclick=()=>{close();sheet(`<h2 style="margin-top:0">Importa backup</h2><textarea id="bt" rows="6" placeholder="Incolla qui il testo del backup"></textarea><div style="height:10px"></div><button class="btn" id="bgo">Importa</button>`,(e2,c2)=>{e2.querySelector('#bgo').onclick=()=>{try{const o=JSON.parse(e2.querySelector('#bt').value);if(!o||!o.name)throw 0;S={...DEF(),...o};save();c2();render();toast('Backup importato')}catch(x){toast('Testo del backup non valido')}}})};
+  el.querySelector('#bimp').onclick=()=>{close();importSheet()};
   el.querySelector('#ssave').onclick=()=>{const n=el.querySelector('#sn').value.trim();if(n)S.name=n;S.level=lv;save();close();render();toast('Impostazioni salvate')};
   el.querySelector('#sreset').onclick=()=>{close();confirmBox('Cancellare tutti i dati? Non si può annullare.','Cancella tutto',()=>{S=DEF();save();render()})};
  });
