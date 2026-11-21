@@ -1,5 +1,5 @@
-const V='stf-v4';
-const ASSETS=['./','index.html','manifest.json','icon180.png','icon192.png','icon512.png'];
+const V='stf-v5';
+const ASSETS=['./','index.html','manifest.json','icon180.png?v=3','icon192.png?v=3','icon512.png?v=3'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
