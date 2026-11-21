@@ -276,10 +276,10 @@ const PROPS={
 /* animazione figure */
 const FIGS=new Set();let rafOn=false;
 function ease(x){return(1-Math.cos(Math.PI*x))/2}
-const TEMPO_K=1.4;function tempoOf(ex){return (ex.tempo||3)*TEMPO_K}
-function phaseS(ex,t0,now){const T=tempoOf(ex);const tt=((now-t0)/1000)%T;return tt<T/2?{s:ease(tt/(T/2)),up:false}:{s:ease(1-(tt-T/2)/(T/2)),up:true}}
+const TEMPO_K=1.7,DEMO_K=2.8;function tempoOf(ex,k){return (ex.tempo||3)*(k||TEMPO_K)}
+function phaseS(ex,t0,now,k){const T=tempoOf(ex,k);const tt=((now-t0)/1000)%T;return tt<T/2?{s:ease(tt/(T/2)),up:false}:{s:ease(1-(tt-T/2)/(T/2)),up:true}}
 function mountFig(el,ex,opts={}){const f={el,ex,t0:performance.now(),opts,paused:false,ps:0};el.innerHTML=`<svg class="fig" viewBox="${ex.vb||'0 0 120 100'}"></svg>`;f.svg=el.firstChild;FIGS.add(f);if(!rafOn){rafOn=true;requestAnimationFrame(loopFig)}return f}
-function loopFig(now){for(const f of FIGS){if(!f.el.isConnected){FIGS.delete(f);continue}if(f.paused)continue;const ph=phaseS(f.ex,f.t0,now);f.ps=ph.s;f.svg.innerHTML=figFrame(f.ex,ph.s,ph.up,{...f.opts,live:true});if(f.onPhase)f.onPhase(ph)}if(FIGS.size)requestAnimationFrame(loopFig);else rafOn=false}
+function loopFig(now){for(const f of FIGS){if(!f.el.isConnected){FIGS.delete(f);continue}if(f.paused)continue;const ph=phaseS(f.ex,f.t0,now,f.opts.k);f.ps=ph.s;f.svg.innerHTML=figFrame(f.ex,ph.s,ph.up,{...f.opts,live:true});if(f.onPhase)f.onPhase(ph)}if(FIGS.size)requestAnimationFrame(loopFig);else rafOn=false}
 function staticFig(ex,s=1,o={}){return `<svg class="fig" viewBox="${ex.vb||'0 0 120 100'}">${figSVG(ex,s,o)}</svg>`}
 
 /* ---------- esercizi ---------- */
@@ -1040,6 +1040,7 @@ function bindExRows(m){m.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>
 function exDetail(e){
  sheet(`<div class="row between"><div><h1 style="margin:0">${esc(e.n)}</h1><div class="small gold">${e.m.p.map(x=>MUSC[x]).join(' · ')}${e.m.s.length?' <span class="dim">+ '+e.m.s.map(x=>MUSC[x]).join(', ')+'</span>':''}</div></div></div>
  <div class="figbox" id="dfig" style="margin-top:12px"></div>
+ <div class="seg" style="margin-top:8px"><button data-k="slower">Super lento</button><button data-k="slow" class="on">Moviola</button><button data-k="norm">Ritmo reale</button></div>
  <div class="legend"><span><i style="background:#FDB927"></i>Muscolo principale</span><span><i style="background:#F3CF73"></i>Aiuta / stabilizza</span></div>
  <div class="cue" id="dcue">${esc(e.cueA)}</div>
  <h2>Come si fa</h2>${e.steps.map((s,i)=>`<div class="row" style="align-items:flex-start;margin-bottom:8px"><b class="gold" style="font:700 20px 'Barlow Condensed',sans-serif;width:20px">${i+1}</b><div>${esc(s)}</div></div>`).join('')}
@@ -1049,7 +1050,8 @@ function exDetail(e){
  <div class="small dim" style="margin:12px 0">Per te: ${e.mode==='reps'?workAmt(e)+' ripetizioni':workAmt(e)+' secondi'}${e.side?' per lato':''}${e.req.length?' · serve: '+e.req.join(', '):''}</div>
  <div class="small mu" style="margin-bottom:12px">Se senti dolore (non fatica), fermati e passa alla versione più facile.</div>
  <button class="btn" id="try">${I('play')} Prova 3 serie</button>`,(el,close)=>{
-  const f=mountFig(el.querySelector('#dfig'),e,{line:true});const cue=el.querySelector('#dcue');let up=null;f.onPhase=ph=>{if(ph.up!==up){up=ph.up;cue.textContent=up?e.cueB:e.cueA}};
+  const f=mountFig(el.querySelector('#dfig'),e,{line:true,k:DEMO_K});
+  el.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k==='slow'?DEMO_K:b.dataset.k==='slower'?4.2:TEMPO_K;f.opts.k=k;f.t0=performance.now();el.querySelectorAll('[data-k]').forEach(x=>x.classList.toggle('on',x===b))});const cue=el.querySelector('#dcue');let up=null;f.onPhase=ph=>{if(ph.up!==up){up=ph.up;cue.textContent=up?e.cueB:e.cueA}};
   el.querySelector('#try').onclick=()=>{close();startPlayer(buildSingle(e),{kind:'single',focus:e.cat,ex:e.id})}});
 }
 
@@ -1070,7 +1072,7 @@ function startPlayer(steps,meta){
  <div id="ptip" class="small" style="min-height:36px"></div>
  <div class="ctrl" style="margin-top:6px"><button id="pprev" aria-label="Indietro">${I('prev')}</button><button class="big" id="ppause" aria-label="Pausa">${I('pause')}</button><button id="pnext" aria-label="Avanti">${I('next')}</button></div>`;
  el.querySelector('#px').onclick=()=>confirmBox('Vuoi interrompere l\'allenamento?','Interrompi',()=>{if(PL.worked>120&&PL.meta.kind!=='single')finishPlayer(true);else closePlayer()});
- el.querySelector('#ppause').onclick=()=>{PL.paused=!PL.paused;COACH.say(PL.paused?'Pausa':'Si riparte!',true);el.querySelector('#ppause').innerHTML=I(PL.paused?'play':'pause');if(PL.fig)PL.fig.paused=PL.paused||PL.steps[PL.i].type!=='work';if(!PL.paused)PL.last=performance.now()};
+ el.querySelector('#ppause').onclick=()=>{PL.paused=!PL.paused;COACH.say(PL.paused?'Pausa':'Si riparte!',true);el.querySelector('#ppause').innerHTML=I(PL.paused?'play':'pause');if(PL.fig&&PL.fig.el)PL.fig.paused=PL.paused;if(!PL.paused)PL.last=performance.now()};
  el.querySelector('#pnext').onclick=()=>goStep(PL.i+1);
  el.querySelector('#pvoice').onclick=e=>{S.set.voice=S.set.voice===false;save();e.currentTarget.innerHTML=I(S.set.voice!==false?'vol':'voloff');if(S.set.voice===false)COACH.stop();else COACH.say('Coach attivo. Spingiamo!',true)};
  if(CAM_OK)el.querySelector('#pcam').onclick=async e=>{const b=e.currentTarget;if(PL.cam){PL.cam=false;CAM.stop();b.classList.remove('on');goStep(PL.i,true);return}
@@ -1097,8 +1099,8 @@ function goStep(i,keep){
  const useCam=PL.cam&&CAM.on&&isW&&CAMEX[e.id];const pf=el.querySelector('#pfig');
  if(useCam){pf.innerHTML='';pf.appendChild(CAM.makeBox());CAM.video.play().catch(()=>{});CAM.setEx(e,ev=>{if(ev.rep){PL.count=ev.rep;updCount();coachRep(ev.rep,s)}});PL.fig={paused:true,svg:document.createElementNS('http://www.w3.org/2000/svg','svg'),opts:{}}}
  else{if(CAM.box&&CAM.box.isConnected)CAM.box.remove();
- PL.fig=mountFig(pf,e,{line:true,bag:(s.kg||(PL.steps[i+1]||{}).kg)?(e.bag||'back'):null});}PL.fig.paused=PL.paused||!isW;PL.figEl=0;
- if(!isW&&PL.fig.svg){PL.fig.svg.innerHTML=figSVG(e,0,PL.fig.opts)}
+ PL.fig=mountFig(pf,e,{line:true,k:isW?null:DEMO_K,bag:(s.kg||(PL.steps[i+1]||{}).kg)?(e.bag||'back'):null});}PL.fig.paused=PL.paused;PL.figEl=0;
+
  const cue=el.querySelector('#pcue');let up=null;
  PL.fig.onPhase=ph=>{if(ph.up!==up){if(up===true&&ph.up===false&&isSet&&!useCam){PL.count++;updCount();coachRep(PL.count,s)}up=ph.up;cue.textContent=up?e.cueB:e.cueA}};
  cue.textContent=isW?e.cueA:(e.steps[0]||'');
