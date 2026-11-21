@@ -114,6 +114,11 @@ const GG=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
 const GGL=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 const MM=['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
 const fmt=s=>{const d=pd(s);return d.getDate()+' '+MM[d.getMonth()]};
+const SPORTS={calcio:['Calcio','calcio',1,0,1],calcetto:['Calcetto','calcetto',1,0,1],basket:['Basket','basket',1,0,1],pallavolo:['Pallavolo','pallavolo',1,1,1],tennis:['Tennis / padel','tennis',1,1,1],corsa:['Corsa','corsa',1,0,0],ciclismo:['Ciclismo','bici',1,0,0],nuoto:['Nuoto','nuoto',0,1,0],arti:['Arti marziali / boxe','allenamento',1,1,1],palestra:['Palestra / pesi','palestra',1,1,0],altro:['Altro sport','sport',1,0,0],nessuno:['Nessuno sport','sport',0,0,0]};
+const JOBS={autista:['Autista / alla guida','Pausa autista',1],ufficio:['Ufficio / scrivania','Pausa scrivania',1],studente:['Studente','Pausa studio',1],piedi:['In piedi (negozio, sala…)','Pausa in piedi',2],fisico:['Lavoro fisico pesante','Pausa scarico',3],casa:['Casa / altro','Pausa attiva',1]};
+const SP=()=>{const k=(typeof S!=='undefined'&&S.sport)||'nessuno';const a=SPORTS[k]||SPORTS.nessuno;return{k,n:a[0],w:a[1],legs:!!a[2],upper:!!a[3],speed:!!a[4],none:k==='nessuno'}};
+const JB=()=>{const k=(typeof S!=='undefined'&&S.job)||'casa';const a=JOBS[k]||JOBS.casa;return{k,n:a[0],pause:a[1],kind:a[2]}};
+const cap1=t=>t.charAt(0).toUpperCase()+t.slice(1);
 const G=(m,f)=>(typeof S!=='undefined'&&S.sex==='f')?f:m;
 const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -413,7 +418,7 @@ const EX=[
  A:{h:[60,59],t:-90,a1:{ang:[95,90]},a2:{ang:[85,88]},l1:{ik:[72,96],b:[1,0]},l2:{ik:[42,94],b:[1,0],f:20}},
  B:{h:[63,63],t:-96,a1:{ang:[-80,-86]},a2:{ang:[85,88]},l1:{ik:[72,96],b:[1,0]},l2:{ik:[42,94],b:[1,0],f:20}},
  cueA:'Bacino avanti, gluteo stretto',cueB:'Braccio in alto, respira',
- steps:['Passo lungo in avanti, piede dietro sulla punta','Stringi il gluteo dietro e porta il bacino avanti','Alza il braccio dello stesso lato','Ottimo dopo ore alla guida'],
+ steps:['Passo lungo in avanti, piede dietro sulla punta','Stringi il gluteo dietro e porta il bacino avanti','Alza il braccio dello stesso lato','Ottimo dopo tante ore seduto'],
  ok:['Busto dritto','Gluteo stretto'],err:['Inarcare la schiena','Piegare il busto in avanti'],easy:'Passo più corto',hard:'Scendi un po\' di più'},
 {id:'polpacci',n:'Allungamento polpacci al muro',cat:'defaticamento',side:true,req:[],lv:[1,3],mode:'time',base:[30,30,30],tempo:5,m:{p:['calf'],s:[]},props:'wallR',
  A:{h:[62,60],t:-75,a1:{ik:[96,46],b:[0,1]},a2:{ik:[96,50],b:[0,1]},l1:{ik:[76,96],b:[1,0]},l2:{ik:[47,96],b:[1,0],f:0}},
@@ -423,7 +428,7 @@ const EX=[
  ok:['Tallone dietro sempre a terra','Piede dietro dritto'],err:['Tallone che si alza','Piede ruotato verso fuori'],easy:'Passo più corto',hard:'Piega il ginocchio dietro per allungare più in basso'},
 {id:'chintuck',n:'Retrazione del mento',cat:'pausa',req:[],lv:[1,3],mode:'time',base:[35,35,35],tempo:3,m:{p:['neck'],s:[]},
  A:{...ST,hd:-90,hx:3},B:{...ST,hd:-90,hx:-2},
- cueA:'Testa in avanti (come alla guida)',cueB:'Porta il mento indietro, doppio mento',
+ cueA:'Testa in avanti (come davanti a uno schermo o alla guida)',cueB:'Porta il mento indietro, doppio mento',
  steps:['In piedi o seduto dritto','Porta la testa indietro facendo il "doppio mento"','Sguardo dritto, non abbassare la testa','Tieni 2 secondi e rilascia'],
  ok:['Sguardo orizzontale','Movimento piccolo'],err:['Piegare la testa in giù','Alzare le spalle'],easy:'Appoggiato al muro con la nuca',hard:'Tieni 5 secondi'},
 {id:'rematore',n:'Rematore senza pesi',cat:'pausa',req:[],lv:[1,3],mode:'time',base:[35,35,35],tempo:2.5,m:{p:['back'],s:['del','arms']},
@@ -525,7 +530,7 @@ const EX=[
  ok:['Scapole giù e indietro','Collo lungo, sguardo a terra'],err:['Alzare le spalle verso le orecchie','Inarcare la schiena per salire'],easy:'Senza pesi',hard:'Bottigliette più pesanti o elastico più duro'}
 ];
 const EXM=Object.fromEntries(EX.map(e=>[e.id,e]));
-const CATS={tutti:'Tutti',massa:'Massa',gambe:'Gambe',sopra:'Parte alta',core:'Core',calcio:'Calcio',prevenzione:'Prevenzione',mobilita:'Mobilità',pausa:'Pausa autista',riscaldamento:'Riscaldamento',defaticamento:'Defaticamento'};
+const CATS={tutti:'Tutti',massa:'Massa',gambe:'Gambe',sopra:'Parte alta',core:'Core',calcio:'Sport e condizione',prevenzione:'Prevenzione',mobilita:'Mobilità',pausa:'Pause lavoro',riscaldamento:'Riscaldamento',defaticamento:'Defaticamento'};
 const MUSC={quad:'quadricipiti',glute:'glutei',ham:'femorali',calf:'polpacci',core:'addome',back:'schiena',chest:'petto',arms:'braccia',del:'spalle',hip:'flessori anca',neck:'collo'};
 
 /* ---------- luoghi e focus ---------- */
@@ -533,7 +538,7 @@ const EQ=[['tappetino','Tappetino','per gli esercizi a terra'],['sedia','Sedia o
 const eqText=eq=>eq&&eq.length?EQ.filter(x=>eq.includes(x[0])).map(x=>x[1].toLowerCase()).join(' · '):'senza attrezzi';
 const LOCS=new Proxy({},{get:(_,k)=>{const L=(S.locs||[]).find(x=>x.id===k)||(S.locs||[])[0];return L?{n:L.n,eq:L.eq,ic:L.ic||'home',d:eqText(L.eq)}:{n:'Casa',eq:[],ic:'home',d:'senza attrezzi'}}});
 const FOCUS={
- sessA:{n:'Sessione A · Velocità + spinta',mass:true,sess:'A',pool:[]},
+ sessA:{get n(){return 'Sessione A · '+SESS.A.n},mass:true,sess:'A',pool:[]},
  sessB:{n:'Sessione B · Tirata + postura',mass:true,sess:'B',pool:[]},
  sessC:{n:'Sessione C · Braccia, spalle, addome',mass:true,sess:'C',pool:[]},
  massa:{n:'Massa libera (sceglie l\'app)',mass:true,pool:[]},
@@ -541,22 +546,23 @@ const FOCUS={
  sopra:{n:'Forza parte alta + core',pool:['pushup','pushknee','pullup','dip','plank','superman','birddog','deadbug','climber']},
  completo:{n:'Total body',pool:['squat','pushup','pushknee','affondo','pullup','dip','plank','ponte','climber','superman']},
  prevenzione:{n:'Prevenzione infortuni',pool:['nordic','calf','ponte','birddog','deadbug','wallsit','hinge','affondo','plank']},
- calcio:{n:'Condizione calcio',pool:['skip','jumpsquat','climber','affondo','calf','squat','plank']},
+ calcio:{n:'Condizione e velocità',pool:['skip','jumpsquat','climber','affondo','calf','squat','plank']},
  mobilita:{n:'Recupero e mobilità',mob:true,pool:['catcow','cobra','flessori','flessinpiedi','polpacci','stretchfem','deadbug','ponte','estensione','bambino','hinge']},
- pre:{n:'Attivazione pre-partita',fixed:['skip','circ','squatlento','affondo','hinge','flessinpiedi','calf','ponte']}
+ pre:{n:'Attivazione prima dello sport',fixed:['skip','circ','squatlento','affondo','hinge','flessinpiedi','calf','ponte']}
 };
 const ROT=['calcio','prevenzione','gambe','completo'];
 const WARM=['skip','circ','rematore','hinge','squatlento','flessinpiedi','catcow'];
 const COOL=['flessori','flessinpiedi','polpacci','stretchfem','cobra','bambino','catcow'];
 const PAUSA=['chintuck','rematore','estensione','hinge','flessinpiedi','polpacci'];
+function pausaList(){const k=JB().kind;if(k===2)return['circ','estensione','hinge','stretchfem','polpacci','squatlento'];if(k===3)return['circ','rematore','estensione','stretchfem','flessinpiedi','chintuck'];return PAUSA}
 const MEAS=[['peso','Peso','kg','Al mattino, dopo il bagno, prima di mangiare'],['petto','Petto','cm','All\'altezza dei capezzoli, braccia giù, a fine espirazione'],['vita','Vita','cm','All\'altezza dell\'ombelico, pancia rilassata'],['fianchi','Fianchi','cm','Nel punto più largo dei glutei, piedi uniti'],['collo','Collo','cm','Sotto il pomo d\'Adamo'],['spalle','Spalle','cm','Giro completo nel punto più largo delle spalle'],['braccio','Braccio','cm','A metà tra spalla e gomito, braccio rilassato'],['avambraccio','Avambraccio','cm','Nel punto più largo, sotto il gomito'],['coscia','Coscia','cm','A metà tra anca e ginocchio, in piedi'],['polpaccio','Polpaccio','cm','Nel punto più largo, in piedi']];
 
 /* ---------- stato e salvataggio ---------- */
 const KEY='showtimefit_v1';
-const DEF=()=>({v:1,sex:'m',name:'',level:0,start:today(),tests:[],loc:'',locs:null,set:{sound:true,vib:true},calW:{},calLog:[],wk:[],pauses:[],meas:[],medals:{},dismissInstall:false,upd:0,mass:{lv:{},kg:{},log:[]},prot:{f:1.8,days:{},custom:[]}});
+const DEF=()=>({v:1,sex:'m',sport:'',job:'',name:'',level:0,start:today(),tests:[],loc:'',locs:null,set:{sound:true,vib:true},calW:{},calLog:[],wk:[],pauses:[],meas:[],medals:{},dismissInstall:false,upd:0,mass:{lv:{},kg:{},log:[]},prot:{f:1.8,days:{},custom:[]}});
 let S=DEF();
 try{const raw=localStorage.getItem(KEY);if(raw)S={...DEF(),...JSON.parse(raw)}}catch(e){}
-function migrateLocs(){if(!S.locs&&S.name){S.locs=[{id:'giardini',n:'Giardini',ic:'home',eq:['tappetino','sedia','zaino','elastico']},{id:'saponara',n:'Saponara',ic:'home',eq:['tappetino','sedia','zaino','elastico','sbarra']},{id:'fuori',n:'Fuori casa',ic:'pin',eq:[]}]}if(S.locs&&S.locs.length&&!S.locs.some(l=>l.id===S.loc))S.loc=S.locs[0].id}
+function migrateLocs(){if(S.name&&!S.sport){S.sport='calcio';S.job=S.job||'autista'}if(!S.locs&&S.name){S.locs=[{id:'giardini',n:'Giardini',ic:'home',eq:['tappetino','sedia','zaino','elastico']},{id:'saponara',n:'Saponara',ic:'home',eq:['tappetino','sedia','zaino','elastico','sbarra']},{id:'fuori',n:'Fuori casa',ic:'pin',eq:[]}]}if(S.locs&&S.locs.length&&!S.locs.some(l=>l.id===S.loc))S.loc=S.locs[0].id}
 migrateLocs();
 let dbRef=null,syncState='local',saveT=null,writing=false,pendingWrite=false;
 function save(){S.upd=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}clearTimeout(saveT);saveT=setTimeout(pushDb,1500)}
@@ -649,14 +655,14 @@ const PHASES=[{k:'base',n:'Base',w:[1,2],c:'#B48CF0',d:'Impari la tecnica: 3 ser
  {k:'spinta',n:'Spinta finale',w:[7,8],c:'#F09595',d:'4 serie, discesa in 4 secondi, varianti più dure. Poi test e nuovo ciclo.',note:'discesa in 4 secondi, fino quasi al limite'}];
 function phaseOf(w=progWeek()){return PHASES.find(p=>w>=p.w[0]&&w<=p.w[1])}
 function phaseSets(n,ph){if(ph.k==='base')return Math.min(n,3);if(ph.k==='scarico')return Math.max(2,Math.ceil(n/2));if(ph.k==='spinta')return Math.min(4,n+1);return n}
-function isCalcio(d){const w=S.calW[monday(d)]||[];return w.includes(dIdx(d))||S.calLog.some(c=>c.date===d)}
+function isCalcio(d){if(SP().none)return false;const w=S.calW[monday(d)]||[];return w.includes(dIdx(d))||S.calLog.some(c=>c.date===d)}
 function planFor(d){
  {const pw=planWeek(monday(d))[d];if(pw)return pw}
- if(isCalcio(d))return{focus:'pre',why:'Oggi giochi: fai solo l\'attivazione prima del calcio'};
- if(isCalcio(addD(d,1)))return{focus:'massa',why:'Domani calcio: massa solo parte alta'};
- if(isCalcio(addD(d,-1)))return{focus:'mobilita',why:'Ieri calcio: recupero e mobilità'};
+ if(isCalcio(d))return{focus:'pre',why:'Oggi '+SP().w+': fai solo l\'attivazione prima del calcio'};
+ if(isCalcio(addD(d,1)))return{focus:'massa',why:'Domani '+SP().w+': massa solo parte alta'};
+ if(isCalcio(addD(d,-1)))return{focus:'mobilita',why:'Ieri '+SP().w+': recupero e mobilità'};
  const mon=monday(d);let k=0;for(let i=0;i<dIdx(d);i++){const x=addD(mon,i);if(!isCalcio(x)&&!isCalcio(addD(x,1))&&!isCalcio(addD(x,-1)))k++}
- const wn=Math.floor(diffD('2024-01-01',mon)/7);if(k%2===0)return{focus:'massa',why:'Giorno libero: si costruisce muscolo'};return{focus:ROT[(Math.floor(k/2)+wn)%ROT.length],why:'Giorno libero: condizione per il calcio'};
+ const wn=Math.floor(diffD('2024-01-01',mon)/7);if(k%2===0)return{focus:'massa',why:'Giorno libero: si costruisce muscolo'};return{focus:ROT[(Math.floor(k/2)+wn)%ROT.length],why:'Giorno libero: condizione fisica'};
 }
 function okEx(e,eq){return e.req.every(r=>eq.includes(r))&&level()>=e.lv[0]&&level()<=e.lv[1]}
 function workAmt(e){const pf=PF[progWeek()-1];const b=e.base[level()-1];const v=Math.max(e.mode==='reps'?2:15,Math.round(b*pf/(e.mode==='time'?5:1))*(e.mode==='time'?5:1));return v}
@@ -691,7 +697,7 @@ function buildWorkout(focus,D,loc){
  cool.forEach((e,i)=>{sw(e);push(e,cS(e),'Defaticamento · '+(i+1)+'/'+cool.length,'cool')});
  return steps;
 }
-function buildPausa(){const st=[];PAUSA.forEach((id,i)=>{const e=EXM[id];st.push({type:'switch',ex:e,secs:5});st.push({type:'work',ex:e,secs:e.side?50:35,label:'Pausa autista · '+(i+1)+'/'+PAUSA.length,phase:'warm'})});return st}
+function buildPausa(){const st=[];const pl=pausaList();pl.forEach((id,i)=>{const e=EXM[id];st.push({type:'switch',ex:e,secs:5});st.push({type:'work',ex:e,secs:e.side?50:35,label:JB().pause+' · '+(i+1)+'/'+pl.length,phase:'warm'})});return st}
 function buildSingle(e){const st=[];for(let s=1;s<=3;s++){st.push({type:'rest',secs:s===1?8:[35,30,25][level()-1],ex:e});st.push({type:'work',ex:e,secs:workSecs(e),label:'Serie '+s+'/3',phase:'main',reps:e.mode==='reps'?workAmt(e):0})}return st}
 function estMin(steps){return Math.round(steps.reduce((a,s)=>a+s.secs,0)/60)}
 
@@ -719,7 +725,7 @@ function slotLvl(sl){if(S.mass.lv[sl.id]!=null)return S.mass.lv[sl.id];if(sl.id=
 function slotEx(sl,eq){if((sl.req||[]).some(r=>!eq.includes(r)))return null;const lv=Math.min(slotLvl(sl),sl.lad.length-1);for(let i=lv;i>=0;i--){const e=EXM[sl.lad[i]];if(e.req.every(r=>eq.includes(r)))return{ex:e,lvl:i}}return null}
 function lastLog(slot,exid){for(let i=S.mass.log.length-1;i>=0;i--){const l=S.mass.log[i];if(l.slot===slot&&l.ex===exid)return l}return null}
 function lastSlotDate(slot){for(let i=S.mass.log.length-1;i>=0;i--)if(S.mass.log[i].slot===slot)return S.mass.log[i].date;return ''}
-function noLegsToday(){return isCalcio(today())||isCalcio(addD(today(),1))}
+function noLegsToday(){return SP().legs&&(isCalcio(today())||isCalcio(addD(today(),1)))}
 function pickSlots(D,loc){
  const eq=LOCS[loc].eq,n={10:2,20:3,30:4,45:5}[D]||3,noLegs=noLegsToday();
  const ws=weekSets();const cand=MASS.filter(sl=>!(noLegs&&sl.legs)).map(sl=>({sl,...(slotEx(sl,eq)||{})})).filter(c=>c.ex);
@@ -779,7 +785,7 @@ function protSheet(){
    <h2>Oggi</h2>${list.length?PASTI.filter(p=>list.some(x=>x.t===p)).map(p=>`<div class="card" style="padding:10px 12px"><b>${p}</b>${list.filter(x=>x.t===p).map(x=>`<div class="row between small" style="margin-top:6px"><span>${esc(x.n)}</span><span class="row"><span class="gold">${x.g} g</span><button class="chip" data-del="${x.id}" style="padding:4px 7px" aria-label="Elimina">${I('x')}</button></span></div>`).join('')}</div>`).join(''):'<div class="empty">Ancora niente oggi.</div>'}
    <h2>Ultimi 7 giorni</h2><div class="card"><div style="display:flex;gap:6px;align-items:flex-end;height:70px">${days.map(d=>{const x=protDay(d);const h=t?Math.min(100,x/t*100):(x?60:0);return `<div style="flex:1;text-align:center"><div style="height:${Math.max(3,h*0.55)}px;background:${t&&x>=t?'#FDB927':x?'#F3CF73':'#2E1C4F'};border-radius:3px;${d===today()?'outline:1px solid #fff':''}"></div><div class="small dim" style="font-size:11px">${GG[dIdx(d)][0]}</div></div>`}).join('')}</div><div class="small dim" style="margin-top:4px">Oro = obiettivo raggiunto</div></div>
    <label>Grammi per kg di peso</label><div class="seg" id="pf">${[1.6,1.8,2.0].map(f=>`<button data-k="${f}" class="${S.prot.f===f?'on':''}">${String(f.toFixed(1)).replace('.',',')} g</button>`).join('')}</div>
-   <div class="hint">1,6-2 g per kg al giorno è la quantità utile per mettere massa. Con il calcio e il lavoro, distribuiscile nei pasti.</div>`;
+   <div class="hint">1,6-2 g per kg al giorno è la quantità utile per mettere massa. Con lo sport e il lavoro, distribuiscile nei pasti.</div>`;
    const all=[...S.prot.custom,...FOODS];
    el.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{pasto=b.dataset.p;draw()});
    el.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{const [n,g]=all[+b.dataset.f];(S.prot.days[today()]=S.prot.days[today()]||[]).push({id:uid(),n,g,t:pasto});save();draw();toast('+'+g+' g · '+n)});
@@ -795,7 +801,7 @@ function protSheet(){
 
 /* ---------- piano A-B-C ---------- */
 const SESS={
- A:{n:'Velocità + spinta',min:35,speed:true,items:[
+ A:{get n(){return SP().speed?'Velocità + spinta':'Spinta + gambe'},min:35,speed:true,items:[
    {slot:'petto',sets:4,range:[8,15],rest:75},
    {slot:'squat',sets:3,range:[8,12],rest:90,legs:true},
    {slot:'spalle',sets:3,range:[10,15],rest:60,alt:'pushdiamond'},
@@ -819,7 +825,7 @@ const SESS={
 function buildSession(L,D,loc){
  const eq=LOCS[loc].eq,ss=SESS[L],ph=phaseOf(),steps=[];const noLegs=noLegsToday();
  ['skip','circ','rematore'].map(i=>EXM[i]).forEach((e,i)=>{steps.push({type:'switch',ex:e,secs:5});steps.push({type:'work',ex:e,secs:30,label:'Riscaldamento · '+(i+1)+'/3',phase:'warm'})});
- if(ss.speed&&D>=20&&!noLegs){const j=level()>=2?EXM.jumpsquat:EXM.climber;
+ if(ss.speed&&SP().speed&&D>=20&&!noLegs){const j=level()>=2?EXM.jumpsquat:EXM.climber;
   steps.push({type:'switch',ex:EXM.skip,secs:5});for(let k=1;k<=2;k++){steps.push({type:'work',ex:EXM.skip,secs:20,label:'Velocità · skip '+k+'/2',phase:'main'});steps.push({type:'rest',secs:30,ex:k<2?EXM.skip:j})}
   for(let k=1;k<=3;k++){steps.push({type:'work',ex:j,secs:j.id==='jumpsquat'?Math.round(5*tempoOf(j)):20,reps:j.id==='jumpsquat'?5:0,label:'Velocità · '+j.n+' '+k+'/3',phase:'main'});if(k<3)steps.push({type:'rest',secs:40,ex:j})}}
  let items=ss.items.filter(it=>!(noLegs&&it.legs));
@@ -853,18 +859,19 @@ function planWeek(mon){
  const sessList=rem.slice(0,Math.max(k,0));
  for(const dset of combos(free,k)){for(const pr of perms(rem.length>k?rem:sessList)){const ass=pr.slice(0,k);let sc=0;
    ass.forEach((x,i)=>{const d=dset[i];const nx=isCalcio(addD(d,1)),pv=isCalcio(addD(d,-1));
-    if(x==='A'){if(nx)sc-=3;if(pv)sc-=3;if(isCalcio(addD(d,2)))sc-=0.3}
-    if(x==='C'&&nx)sc+=2;if((x==='B'||x==='C')&&pv)sc+=0.5;sc-=0.15*days.indexOf(d)});
+    const sp=SP();if(x==='A'){if(nx)sc-=sp.legs?3:0.5;if(pv)sc-=sp.legs?3:0.5;if(sp.legs&&isCalcio(addD(d,2)))sc-=0.3}
+    if(x==='B'&&nx&&sp.upper)sc-=2.5;
+    if(x==='C'&&nx)sc+=sp.upper?-1.5:2;if((x==='B'||x==='C')&&pv)sc+=0.5;sc-=0.15*days.indexOf(d)});
    for(let i=1;i<k;i++)if(diffD(dset[i-1],dset[i])===1)sc-=2;
    for(let i=1;i<k;i++)if(ass[i-1]<ass[i])sc+=0.5;
    if(sc>bs){bs=sc;best={dset,ass}}}}
  const res={};
  days.forEach(d=>{
   if(dd[d]){res[d]={focus:'sess'+dd[d],why:'Fatto',done:true};return}
-  if(isCalcio(d)){res[d]={focus:'pre',why:'Oggi giochi: solo attivazione prima del calcio',calcio:true};return}
+  if(isCalcio(d)){res[d]={focus:'pre',why:'Oggi '+SP().w+': solo attivazione prima',calcio:true};return}
   const i=best?best.dset.indexOf(d):-1;
-  if(i>=0){const x=best.ass[i];res[d]={focus:'sess'+x,why:isCalcio(addD(d,1))?'Domani calcio: sessione senza gambe pesanti':'Programma della settimana'};return}
-  if(isCalcio(addD(d,-1)))res[d]={focus:'mobilita',why:'Ieri calcio: recupero e mobilità'};
+  if(i>=0){const x=best.ass[i];res[d]={focus:'sess'+x,why:isCalcio(addD(d,1))?'Domani '+SP().w+': sessione leggera per le parti che userai':'Programma della settimana'};return}
+  if(isCalcio(addD(d,-1)))res[d]={focus:'mobilita',why:'Ieri '+SP().w+': recupero e mobilità'};
   else res[d]={focus:'mobilita',why:d<t?'Riposo':'Riposo attivo: mobilità leggera',rest:true};
  });
  return res;
@@ -879,8 +886,8 @@ const MEDALS=[
  ['w1','Primo allenamento','Hai iniziato',()=>S.wk.length>=1],['w5','5 allenamenti','Si comincia a vedere',()=>S.wk.length>=5],['w25','25 allenamenti','Costanza vera',()=>S.wk.length>=25],['w50','50 allenamenti','Showtime',()=>S.wk.length>=50],['w100','100 allenamenti','Leggenda',()=>S.wk.length>=100],
  ['s3','3 giorni di fila','Streak accesa',()=>bestStreak()>=3],['s7','7 giorni di fila','Settimana perfetta',()=>bestStreak()>=7],['s14','14 giorni di fila','Inarrestabile',()=>bestStreak()>=14],
  ['mese','Primo mese senza saltare','4 settimane con almeno 2 attività',monthSolid],
- ['c1','Prima partita registrata','Calcio nel diario',()=>S.calLog.length>=1],['c10','10 sessioni di calcio','Sempre in campo',()=>S.calLog.length>=10],
- ['p10','Autista attivo','10 pause attive',()=>S.pauses.length>=10],['m1','Metro alla mano','Prima misura salvata',()=>S.meas.length>=1],['t2','Rimesso alla prova','Rifatto il test di livello',()=>S.tests.length>=2],
+ ['c1','Primo sport registrato','Sport nel diario',()=>S.calLog.length>=1],['c10','10 sessioni di sport','Sempre in campo',()=>S.calLog.length>=10],
+ ['p10','Pause attive','10 pause attive',()=>S.pauses.length>=10],['m1','Metro alla mano','Prima misura salvata',()=>S.meas.length>=1],['t2','Rimesso alla prova','Rifatto il test di livello',()=>S.tests.length>=2],
  ['pu20','20 piegamenti','Nel test di livello',()=>S.tests.some(t=>t.push>=20)],['pu30','30 piegamenti','Nel test di livello',()=>S.tests.some(t=>t.push>=30)],
  ['min500','500 minuti','Di allenamento totale',()=>S.wk.reduce((a,w)=>a+(w.min||0),0)>=500]
 ];
@@ -922,11 +929,25 @@ function onboarding(){
  $('#imp').onclick=importSheet;
  m.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{S.sex=b.dataset.s;S.set.vsex=b.dataset.s;m.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('on',x===b))});
  $('#go').onclick=()=>{const v=$('#nm').value.trim();if(!v){$('#nm').focus();$('#nm').style.outline='2px solid #F09595';return}S.name=v;save();render()};return}
+ if(!S.sport||!S.job)return profileSetup(m,true);
  if(!S.locs||!S.locs.length)return placeSetup(m);
  testView(m,true);
 }
 function eqPicker(sel){return `<div style="display:flex;flex-direction:column;gap:8px">${EQ.map(([k,n,d])=>`<button class="card row eqb ${sel.includes(k)?'on':''}" data-eq="${k}" style="margin:0;width:100%;border:0;color:var(--tx);text-align:left;padding:11px 12px;${sel.includes(k)?'outline:2px solid var(--gold)':''}"><span style="width:26px;height:26px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:${sel.includes(k)?'var(--gold)':'var(--card2)'};color:#2A1A47">${sel.includes(k)?I('check'):''}</span><div style="flex:1"><b>${n}</b><div class="small dim">${d}</div></div></button>`).join('')}</div>`}
 function bindEq(root,sel,redraw){root.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{const k=b.dataset.eq;const i=sel.indexOf(k);i<0?sel.push(k):sel.splice(i,1);redraw()})}
+function chipGrid(map,sel,attr){return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${Object.entries(map).map(([k,a])=>`<button class="chip ${sel===k?'on':''}" data-${attr}="${k}" style="justify-content:center;text-align:center;padding:11px 8px;border-radius:12px;white-space:normal">${esc(a[0])}</button>`).join('')}</div>`}
+function profileSetup(m,first,onDone){
+ let sp=S.sport||'',jb=S.job||'';
+ const draw=()=>{m.innerHTML=`${first?'':`<button class="chip" id="pbk">${I('back')} Indietro</button>`}<h1>Il tuo profilo</h1><p class="mu">Così il piano si adatta al tuo sport e al tuo lavoro.</p>
+ <label>Che sport fai di solito?</label>${chipGrid(SPORTS,sp,'sp')}
+ <label style="margin-top:16px">Che lavoro fai?</label>${chipGrid(JOBS,jb,'jb')}
+ <div class="hint" style="margin-top:8px">Lo sport decide quando allenare le gambe e cosa fare il giorno prima. Il lavoro decide le pause attive durante la giornata.</div>
+ <button class="btn" id="prgo" style="margin-top:14px">${first?'Continua':'Salva'} ${I('chev')}</button>`;
+  m.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{sp=b.dataset.sp;draw()});m.querySelectorAll('[data-jb]').forEach(b=>b.onclick=()=>{jb=b.dataset.jb;draw()});
+  if(!first)$('#pbk').onclick=()=>{onDone&&onDone(false)};
+  $('#prgo').onclick=()=>{if(!sp||!jb){toast('Scegli sport e lavoro');return}S.sport=sp;S.job=jb;save();if(first)render();else onDone&&onDone(true)}};
+ draw();
+}
 function placeSetup(m){
  let nm='Casa',sel=['tappetino','sedia'],fuori=true;
  const draw=()=>{m.innerHTML=`<h1>Dove ti alleni di solito?</h1><p class="mu">Dai un nome al posto dove vivi o ti alleni e dimmi che attrezzi hai. Il piano userà solo esercizi che puoi fare lì. Potrai aggiungere altri luoghi dopo, ad esempio la casa dei tuoi o la palestra.</p>
@@ -999,19 +1020,19 @@ function vHome(m){
  m.innerHTML=`<div class="row between"><span class="mu">${GGL[dIdx(d)]} ${fmt(d)}</span><div class="row"><span class="gold row" style="gap:4px">${I('flame')} ${st} ${st===1?'giorno':'giorni'}</span><button class="chip" id="set" aria-label="Impostazioni" style="padding:7px">${I('set')}</button></div></div>
  <h1 style="margin-top:8px">Ciao ${esc(S.name)}, ${G('pronto','pronta')} a muoverti?</h1>
  <div class="chips" style="margin-bottom:12px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px">${S.locs.map(l=>`<button class="chip ${S.loc===l.id?'on':''}" data-loc="${l.id}" style="flex:none">${I(l.ic||'home')} ${esc(l.n)}</button>`).join('')}<button class="chip" id="plm" style="flex:none" aria-label="Gestisci luoghi">${I('plus')} Luoghi</button></div>
- ${!wkSet?`<button class="card row" id="setw" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('ball','ic gold')}<div style="flex:1"><b>Quando giochi questa settimana?</b><div class="small mu">Segna i giorni di calcio e il piano si sistema da solo</div></div>${I('chev')}</button>`:''}
+ ${!wkSet&&!SP().none?`<button class="card row" id="setw" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('ball','ic gold')}<div style="flex:1"><b>Quando fai ${esc(SP().w)} questa settimana?</b><div class="small mu">Segna i giorni e il piano si sistema da solo</div></div>${I('chev')}</button>`:''}
  <div class="hero">
   <div class="small" style="color:var(--gold)">Settimana ${progWeek()} di 8 · ${ph.n} · ${esc(pl.done&&!homeFocus?'già fatta oggi':pl.why)}</div>
   <div style="font:700 26px 'Barlow Condensed',sans-serif;margin:4px 0">${esc(F.n)}</div>
-  <div class="small" style="color:#D9CCEF">${F.sess?esc(ph.d)+(noLegsToday()?' · niente gambe pesanti (calcio vicino)':''):F.mass?'Serie da 8-15 fino quasi al limite · recupero 75″'+(noLegsToday()?' · niente gambe (calcio vicino)':''):F.fixed?'Mobilità e attivazione per arrivare '+G('pronto','pronta')+' alla partita':nEx+' esercizi · '+LOCS[S.loc].n+' ('+LOCS[S.loc].d+')'}${doneToday?' · fatto oggi '+'✓':''}</div>
+  <div class="small" style="color:#D9CCEF">${F.sess?esc(ph.d)+(noLegsToday()?' · niente gambe pesanti ('+SP().w+' vicino)':''):F.mass?'Serie da 8-15 fino quasi al limite · recupero 75″'+(noLegsToday()?' · niente gambe ('+SP().w+' vicino)':''):F.fixed?'Mobilità e attivazione per arrivare '+G('pronto','pronta')+' allo sport':nEx+' esercizi · '+LOCS[S.loc].n+' ('+LOCS[S.loc].d+')'}${doneToday?' · fatto oggi '+'✓':''}</div>
   <div class="chips" style="margin:12px 0">${[10,20,30,45].map(x=>`<button class="chip wh ${homeDur===x?'on':''}" data-dur="${x}" style="background:${homeDur===x?'#fff':'transparent'};border:1px solid #8A6BBE;color:${homeDur===x?'var(--pur)':'#fff'}">${x}′</button>`).join('')}</div>
   <button class="btn" id="start">${I('play')} Inizia · ${estMin(steps)} min</button>
   <button class="chip" id="chg" style="margin-top:10px;background:transparent;color:#D9CCEF;padding:4px 0">${I('refresh')} Cambia tipo di allenamento</button>
  </div>
  <button class="card row" id="prot" style="width:100%;border:0;color:var(--tx);text-align:left">${ring(protDay(),protTarget(),58)}<div style="flex:1"><b>Proteine oggi</b><div class="small mu">${protTarget()?(protDay()>=protTarget()?'Obiettivo raggiunto':'Ne mancano '+(protTarget()-protDay())+' g'):'Inserisci il peso per l\'obiettivo'}</div></div>${I('plus','ic gold')}</button>
- <div class="grid2">
-  <button class="tile" id="pausa">${I('wheel')}<div style="font-weight:600;margin-top:4px">Pausa autista</div><div class="small dim">4 min · collo, schiena, anche</div></button>
-  <button class="tile" id="calcio">${I('ball')}<div style="font-weight:600;margin-top:4px">Registra calcio</div><div class="small dim">partita o allenamento</div></button>
+ <div class="${SP().none?'':'grid2'}">
+  <button class="tile" id="pausa" style="width:100%">${I(JB().k==='autista'?'wheel':'clock')}<div style="font-weight:600;margin-top:4px">${esc(JB().pause)}</div><div class="small dim">4 min · ${JB().kind===2?'schiena, gambe, piedi':JB().kind===3?'schiena e spalle':'collo, schiena, anche'}</div></button>
+  ${SP().none?'':`<button class="tile" id="calcio">${I('ball')}<div style="font-weight:600;margin-top:4px">Registra ${esc(SP().w)}</div><div class="small dim">gara o allenamento</div></button>`}
  </div>
  ${retest?`<button class="card row" id="rt" style="width:100%;border:0;color:var(--tx);text-align:left;margin-top:12px">${I('target','ic gold')}<div style="flex:1"><b>È ora di rifare il test</b><div class="small mu">Sono passate 4 settimane: vediamo i progressi</div></div>${I('chev')}</button>`:''}
  <h2>Nel programma di oggi</h2>
@@ -1027,7 +1048,7 @@ function vHome(m){
  $('#prot').onclick=protSheet;
  $('#chg').onclick=()=>sheet(`<h2 style="margin-top:0">Che allenamento vuoi fare?</h2><div class="small dim" style="margin-bottom:8px">Le sessioni A, B e C sono il tuo programma: fanne 3 a settimana.</div><p class="small mu">Consigliato oggi: ${esc(FOCUS[pl.focus].n)}</p>${Object.entries(FOCUS).map(([k,f])=>`<button class="btn ${k===fc?'':'sec'}" style="margin-bottom:8px" data-f="${k}">${esc(f.n)}${k===pl.focus?' · consigliato':''}</button>`).join('')}`,(el,close)=>el.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{homeFocus=b.dataset.f===pl.focus?null:b.dataset.f;close();render()}));
  $('#pausa').onclick=()=>startPlayer(buildPausa(),{kind:'pausa'});
- $('#calcio').onclick=()=>calcioForm();
+ if($('#calcio'))$('#calcio').onclick=()=>calcioForm();
  $('#set').onclick=settings;
  if($('#setw'))$('#setw').onclick=()=>{WEEKOFF=0;goTab('week')};
  if($('#rt'))$('#rt').onclick=()=>testView($('#main'),false);
@@ -1144,7 +1165,7 @@ function finishPlayer(partial){
  const min=Math.max(1,Math.round((Date.now()-PL.start)/60000));const meta=PL.meta;const el=PL.el;
  beep(1320,0.3);vib([200,100,200,100,300]);CAM.stop();COACH.say(partial?'Allenamento interrotto. Va bene lo stesso, ci rifacciamo la prossima volta.':'Finito! Grande lavoro, '+G('campione','campionessa')+'!',true);
  if(meta.kind==='pausa'){S.pauses.push(today());save();const nm=checkMedals();
-  el.innerHTML=`<div style="margin:auto;text-align:center;width:100%"><div style="font:700 44px 'Barlow Condensed',sans-serif" class="gold">PAUSA FATTA</div><p class="mu">Collo, schiena e anche ringraziano. Ripetila tra un turno e l'altro.</p>${nm.length?`<p class="gold">${I('medal')} ${esc(nm.join(', '))}</p>`:''}<button class="btn" id="fin">Chiudi</button></div>`;
+  el.innerHTML=`<div style="margin:auto;text-align:center;width:100%"><div style="font:700 44px 'Barlow Condensed',sans-serif" class="gold">PAUSA FATTA</div><p class="mu">Il tuo corpo ringrazia. Ripetila durante la giornata.</p>${nm.length?`<p class="gold">${I('medal')} ${esc(nm.join(', '))}</p>`:''}<button class="btn" id="fin">Chiudi</button></div>`;
   el.querySelector('#fin').onclick=closePlayer;return}
  const ups=meta.kind==='massa'?applyMass(PL.mass):[];if(meta.kind==='massa')save();
  const setsDone=Object.values(PL.mass).reduce((a,r)=>a+r.reps.length,0);
@@ -1165,22 +1186,22 @@ function vWeek(m){
  m.innerHTML=`<h1>La tua settimana</h1>
  <div class="row between card"><button class="chip" id="wp" aria-label="Settimana prima">${I('chevl')}</button><div style="text-align:center"><b>${fmt(mon)} – ${fmt(days[6])}</b><div class="small dim">${WEEKOFF===0?'Questa settimana':WEEKOFF===1?'Prossima settimana':WEEKOFF===-1?'Settimana scorsa':''}</div></div><button class="chip" id="wn" aria-label="Settimana dopo">${I('chev')}</button></div>
  <div class="card small" style="padding:10px 12px"><b class="gold">Settimana ${progWeek()} di 8 · ${phaseOf().n}</b><div class="mu">${phaseOf().d}</div></div>
- <p class="small mu">Tocca il pallone nei giorni in cui giochi (partita o allenamento). Le sessioni A, B e C si spostano da sole.</p>
+ <p class="small mu" style="${SP().none?'display:none':''}">Tocca il pallone nei giorni in cui fai ${esc(SP().w)} (gara o allenamento). Le sessioni A, B e C si spostano da sole.</p>
  ${days.map((d,i)=>{const pl=planFor(d);const on=set.includes(i);const done=S.wk.filter(w=>w.date===d);const cl=S.calLog.find(c=>c.date===d);
   const P2=planWeek(mon)[d];
   return `<div class="dayrow ${d===today()?'today':''}"><div class="dname"><span class="small dim">${GG[i]}</span><b>${pd(d).getDate()}</b></div>
-  <div style="flex:1;min-width:0"><div style="font-weight:600">${on||cl?'<span class="gold">Calcio</span>'+(cl?' · '+cl.tipo+' '+cl.min+'′':''):(P2.focus.startsWith('sess')?'<span style="background:var(--gold);color:#2A1A47;border-radius:6px;padding:0 6px;margin-right:6px">'+P2.focus.slice(4)+'</span>'+esc(SESS[P2.focus.slice(4)].n):(P2.rest?'<span class="dim">Riposo</span>':esc(FOCUS[P2.focus].n)))}</div><div class="small dim">${on||cl?'Prima: '+FOCUS.pre.n.toLowerCase():esc(P2.done?'Fatta ✓':P2.why)}</div>${done.length?`<div class="small" style="color:var(--ok)">${I('check','ic')} ${done.map(w=>w.min+' min').join(' + ')}</div>`:''}</div>
-  <button class="ball ${on?'on':''}" data-d="${i}" aria-label="Giorno di calcio">${I('ball')}</button></div>`}).join('')}
- <div class="row between"><h2>Diario calcio</h2><button class="chip on" id="addc">${I('plus')} Aggiungi</button></div>
- <div id="clog">${S.calLog.length?S.calLog.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12).map(c=>`<div class="card row" style="padding:10px 12px"><div style="flex:1"><b>${esc(c.tipo)}</b> · ${fmt(c.date)} · ${c.min}′<div class="small mu">Fatica ${c.rpe}/10${c.note?' · '+esc(c.note):''}</div></div><button class="chip" data-delc="${c.id}" aria-label="Elimina">${I('trash')}</button></div>`).join(''):'<div class="empty">Nessuna partita registrata. Dopo il calcio segna minuti e fatica.</div>'}</div>`;
+  <div style="flex:1;min-width:0"><div style="font-weight:600">${on||cl?'<span class="gold">'+esc(SP().n)+'</span>'+(cl?' · '+cl.tipo+' '+cl.min+'′':''):(P2.focus.startsWith('sess')?'<span style="background:var(--gold);color:#2A1A47;border-radius:6px;padding:0 6px;margin-right:6px">'+P2.focus.slice(4)+'</span>'+esc(SESS[P2.focus.slice(4)].n):(P2.rest?'<span class="dim">Riposo</span>':esc(FOCUS[P2.focus].n)))}</div><div class="small dim">${on||cl?'Prima: '+FOCUS.pre.n.toLowerCase():esc(P2.done?'Fatta ✓':P2.why)}</div>${done.length?`<div class="small" style="color:var(--ok)">${I('check','ic')} ${done.map(w=>w.min+' min').join(' + ')}</div>`:''}</div>
+  ${SP().none?'':`<button class="ball ${on?'on':''}" data-d="${i}" aria-label="Giorno di sport">${I('ball')}</button>`}</div>`}).join('')}
+ ${SP().none?'<!--':''}<div class="row between"><h2>Diario ${esc(SP().w)}</h2><button class="chip on" id="addc">${I('plus')} Aggiungi</button></div>
+ <div id="clog">${S.calLog.length?S.calLog.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12).map(c=>`<div class="card row" style="padding:10px 12px"><div style="flex:1"><b>${esc(c.tipo)}</b> · ${fmt(c.date)} · ${c.min}′<div class="small mu">Fatica ${c.rpe}/10${c.note?' · '+esc(c.note):''}</div></div><button class="chip" data-delc="${c.id}" aria-label="Elimina">${I('trash')}</button></div>`).join(''):'<div class="empty">Nessuna sessione registrata. Dopo lo sport segna minuti e fatica.</div>'}</div>${SP().none?'-->':''}`;
  $('#wp').onclick=()=>{WEEKOFF--;render()};$('#wn').onclick=()=>{WEEKOFF++;render()};
  m.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const i=+b.dataset.d;const a=new Set(S.calW[mon]||[]);a.has(i)?a.delete(i):a.add(i);S.calW[mon]=[...a].sort();save();homeFocus=null;render()});
- $('#addc').onclick=()=>calcioForm();
+ if($('#addc'))$('#addc').onclick=()=>calcioForm();
  m.querySelectorAll('[data-delc]').forEach(b=>b.onclick=()=>confirmBox('Eliminare questa sessione?','Elimina',()=>{S.calLog=S.calLog.filter(c=>c.id!==b.dataset.delc);save();render()}));
 }
 function calcioForm(){
- sheet(`<h2 style="margin-top:0">Registra calcio</h2>
- <div class="seg" id="ctipo"><button class="on" data-t="Partita">Partita</button><button data-t="Allenamento">Allenamento</button><button data-t="Calcetto">Calcetto</button></div>
+ sheet(`<h2 style="margin-top:0">Registra ${esc(SP().w)}</h2>
+ <div class="seg" id="ctipo"><button class="on" data-t="Partita">Gara</button><button data-t="Allenamento">Allenamento</button><button data-t="Libero">Libero</button></div>
  <div class="grid2"><div><label>Data</label><input type="date" id="cd" value="${today()}"></div><div><label>Minuti giocati</label><input type="number" inputmode="numeric" id="cm" value="90"></div></div>
  <label>Fatica (1 = facile, 10 = distrutto)</label><div class="chips" id="crpe">${[1,2,3,4,5,6,7,8,9,10].map(x=>`<button class="chip ${x===7?'on':''}" data-r="${x}" style="min-width:40px;justify-content:center">${x}</button>`).join('')}</div>
  <label>Note (dolori, sensazioni)</label><input id="cn" placeholder="Es. un po' di fastidio al flessore">
@@ -1188,7 +1209,7 @@ function calcioForm(){
   let tipo='Partita',rpe=7;
   el.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tipo=b.dataset.t;el.querySelectorAll('[data-t]').forEach(x=>x.classList.toggle('on',x===b))});
   el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{rpe=+b.dataset.r;el.querySelectorAll('[data-r]').forEach(x=>x.classList.toggle('on',x===b))});
-  el.querySelector('#csave').onclick=()=>{const d=el.querySelector('#cd').value||today();S.calLog.push({id:uid(),date:d,tipo,min:+el.querySelector('#cm').value||0,rpe,note:el.querySelector('#cn').value.trim()});save();const nm=checkMedals();close();render();toast(nm.length?'Nuova medaglia: '+nm.join(', '):'Calcio registrato: il piano si adatta')};
+  el.querySelector('#csave').onclick=()=>{const d=el.querySelector('#cd').value||today();S.calLog.push({id:uid(),date:d,tipo,min:+el.querySelector('#cm').value||0,rpe,note:el.querySelector('#cn').value.trim()});save();const nm=checkMedals();close();render();toast(nm.length?'Nuova medaglia: '+nm.join(', '):cap1(SP().w)+' registrato: il piano si adatta')};
  });
 }
 
@@ -1286,6 +1307,7 @@ function settings(){
  <label>Profilo</label><div class="seg" id="ssx"><button data-x="m" class="${S.sex!=='f'?'on':''}">Uomo</button><button data-x="f" class="${S.sex==='f'?'on':''}">Donna</button></div>
  <label>Voce del coach</label><div class="seg" id="svx"><button data-v="f" class="${(S.set.vsex||'f')==='f'?'on':''}">Femminile</button><button data-v="m" class="${S.set.vsex==='m'?'on':''}">Maschile</button></div><div class="hint">Dipende dalle voci italiane installate sul telefono.</div>
  <label>Livello</label><div class="seg" id="slv">${['Principiante','Intermedio','Avanzato'].map((n,i)=>`<button data-l="${i+1}" class="${S.level===i+1?'on':''}">${n}</button>`).join('')}</div>
+ <label>Sport e lavoro</label><button class="btn sec" id="sprof">${esc(SP().n)} · ${esc(JB().n)}</button>
  <label>Luoghi e attrezzi</label><button class="btn sec" id="sloc">${I('pin')} I tuoi luoghi (${S.locs.length})</button>
  <label>Avvisi del timer</label><div class="chips"><button class="chip ${S.set.sound?'on':''}" id="ss">Beep</button><button class="chip ${S.set.vib?'on':''}" id="sv">Vibrazione</button><button class="chip ${S.set.voice!==false?'on':''}" id="svo">Voce del coach</button></div>
  <div class="hint">La vibrazione funziona su Android; su iPhone il browser non la permette, resta il beep.</div>
@@ -1298,6 +1320,7 @@ function settings(){
   el.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{S.set.vsex=b.dataset.v;COACH.v=null;COACH.pick();el.querySelectorAll('[data-v]').forEach(x=>x.classList.toggle('on',x===b));COACH.say(S.set.vsex==='f'?'Ciao, sono la tua coach!':'Ciao, sono il tuo coach!',true)});el.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{lv=+b.dataset.l;el.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('on',x===b))});
   el.querySelector('#ss').onclick=e=>{S.set.sound=!S.set.sound;e.currentTarget.classList.toggle('on',S.set.sound);if(S.set.sound)beep()};
   el.querySelector('#sloc').onclick=()=>{close();placesSheet()};
+  el.querySelector('#sprof').onclick=()=>{close();const L=openLayer(()=>render());profileSetup($('#main'),false,ok=>{closeLayer(L);render();if(ok)toast('Profilo aggiornato')})};
   el.querySelector('#sv').onclick=e=>{S.set.vib=!S.set.vib;e.currentTarget.classList.toggle('on',S.set.vib);vib(100)};
   el.querySelector('#svo').onclick=e=>{S.set.voice=S.set.voice===false;e.currentTarget.classList.toggle('on',S.set.voice!==false);if(S.set.voice!==false)COACH.say('Ciao! Sono il tuo coach. Spingiamo!',true)};
   el.querySelector('#srest').onclick=()=>{S.start=today();save();toast('Programma ripartito dalla settimana 1')};
