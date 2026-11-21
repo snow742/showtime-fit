@@ -525,7 +525,9 @@ const CATS={tutti:'Tutti',massa:'Massa',gambe:'Gambe',sopra:'Parte alta',core:'C
 const MUSC={quad:'quadricipiti',glute:'glutei',ham:'femorali',calf:'polpacci',core:'addome',back:'schiena',chest:'petto',arms:'braccia',del:'spalle',hip:'flessori anca',neck:'collo'};
 
 /* ---------- luoghi e focus ---------- */
-const LOCS={giardini:{n:'Giardini',ic:'home',eq:['tappetino','sedia','zaino','elastico'],d:'tappetino · sedia · zaino · elastico'},saponara:{n:'Saponara',ic:'home',eq:['tappetino','sedia','zaino','elastico','sbarra'],d:'+ sbarra trazioni'},fuori:{n:'Fuori',ic:'pin',eq:[],d:'niente attrezzi'}};
+const EQ=[['tappetino','Tappetino','per gli esercizi a terra'],['sedia','Sedia o panca','stabile, appoggiata al muro'],['zaino','Zaino','da riempire con bottiglie o libri'],['elastico','Elastico','fascia elastica di resistenza'],['sbarra','Sbarra per trazioni','fissa o da porta']];
+const eqText=eq=>eq&&eq.length?EQ.filter(x=>eq.includes(x[0])).map(x=>x[1].toLowerCase()).join(' · '):'senza attrezzi';
+const LOCS=new Proxy({},{get:(_,k)=>{const L=(S.locs||[]).find(x=>x.id===k)||(S.locs||[])[0];return L?{n:L.n,eq:L.eq,ic:L.ic||'home',d:eqText(L.eq)}:{n:'Casa',eq:[],ic:'home',d:'senza attrezzi'}}});
 const FOCUS={
  sessA:{n:'Sessione A · Velocità + spinta',mass:true,sess:'A',pool:[]},
  sessB:{n:'Sessione B · Tirata + postura',mass:true,sess:'B',pool:[]},
@@ -547,15 +549,17 @@ const MEAS=[['peso','Peso','kg','Al mattino, dopo il bagno, prima di mangiare'],
 
 /* ---------- stato e salvataggio ---------- */
 const KEY='showtimefit_v1';
-const DEF=()=>({v:1,name:'',level:0,start:today(),tests:[],loc:'giardini',set:{sound:true,vib:true},calW:{},calLog:[],wk:[],pauses:[],meas:[],medals:{},dismissInstall:false,upd:0,mass:{lv:{},kg:{},log:[]},prot:{f:1.8,days:{},custom:[]}});
+const DEF=()=>({v:1,name:'',level:0,start:today(),tests:[],loc:'',locs:null,set:{sound:true,vib:true},calW:{},calLog:[],wk:[],pauses:[],meas:[],medals:{},dismissInstall:false,upd:0,mass:{lv:{},kg:{},log:[]},prot:{f:1.8,days:{},custom:[]}});
 let S=DEF();
 try{const raw=localStorage.getItem(KEY);if(raw)S={...DEF(),...JSON.parse(raw)}}catch(e){}
+function migrateLocs(){if(!S.locs&&S.name){S.locs=[{id:'giardini',n:'Giardini',ic:'home',eq:['tappetino','sedia','zaino','elastico']},{id:'saponara',n:'Saponara',ic:'home',eq:['tappetino','sedia','zaino','elastico','sbarra']},{id:'fuori',n:'Fuori casa',ic:'pin',eq:[]}]}if(S.locs&&S.locs.length&&!S.locs.some(l=>l.id===S.loc))S.loc=S.locs[0].id}
+migrateLocs();
 let dbRef=null,syncState='local',saveT=null,writing=false,pendingWrite=false;
 function save(){S.upd=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}clearTimeout(saveT);saveT=setTimeout(pushDb,1500)}
 async function pushDb(){if(!dbRef)return;if(writing){pendingWrite=true;return}writing=true;try{await dbRef.set({json:JSON.stringify(S),upd:S.upd});syncState='cloud'}catch(e){if(e&&e.code==='invalid_argument'){dbRef=null;syncState='local'}}writing=false;if(pendingWrite){pendingWrite=false;pushDb()}}
 (async()=>{try{if(!window.claude||!claude.use)return;const db=await claude.use('db');const us=await claude.use('user');if(!db||!us)return;const id=await us.id();if(!id)return;
  dbRef=db.doc('data/users/'+id+'/state');const snap=await dbRef.get();
- if(snap.exists){const d=snap.data();if(d&&d.json&&(d.upd||0)>(S.upd||0)){S={...DEF(),...JSON.parse(d.json)};try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}render()}else if((S.upd||0)>(d.upd||0))pushDb()}
+ if(snap.exists){const d=snap.data();if(d&&d.json&&(d.upd||0)>(S.upd||0)){S={...DEF(),...JSON.parse(d.json)};migrateLocs();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}render()}else if((S.upd||0)>(d.upd||0))pushDb()}
  else if(S.name)pushDb();
  syncState='cloud';}catch(e){}})();
 
@@ -912,7 +916,45 @@ function onboarding(){
  <p class="dim small" style="margin-top:14px">I dati restano salvati sul tuo telefono. L'app funziona anche senza internet.</p></div>`;
  $('#imp').onclick=importSheet;
  $('#go').onclick=()=>{const v=$('#nm').value.trim();if(!v){$('#nm').focus();$('#nm').style.outline='2px solid #F09595';return}S.name=v;save();render()};return}
+ if(!S.locs||!S.locs.length)return placeSetup(m);
  testView(m,true);
+}
+function eqPicker(sel){return `<div style="display:flex;flex-direction:column;gap:8px">${EQ.map(([k,n,d])=>`<button class="card row eqb ${sel.includes(k)?'on':''}" data-eq="${k}" style="margin:0;width:100%;border:0;color:var(--tx);text-align:left;padding:11px 12px;${sel.includes(k)?'outline:2px solid var(--gold)':''}"><span style="width:26px;height:26px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:${sel.includes(k)?'var(--gold)':'var(--card2)'};color:#2A1A47">${sel.includes(k)?I('check'):''}</span><div style="flex:1"><b>${n}</b><div class="small dim">${d}</div></div></button>`).join('')}</div>`}
+function bindEq(root,sel,redraw){root.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{const k=b.dataset.eq;const i=sel.indexOf(k);i<0?sel.push(k):sel.splice(i,1);redraw()})}
+function placeSetup(m){
+ let nm='Casa',sel=['tappetino','sedia'],fuori=true;
+ const draw=()=>{m.innerHTML=`<h1>Dove ti alleni di solito?</h1><p class="mu">Dai un nome al posto dove vivi o ti alleni e dimmi che attrezzi hai. Il piano userà solo esercizi che puoi fare lì. Potrai aggiungere altri luoghi dopo, ad esempio la casa dei tuoi o la palestra.</p>
+ <label>Nome del luogo</label><input id="pn" value="${esc(nm)}" placeholder="Casa, casa dei miei…" maxlength="24">
+ <label style="margin-top:14px">Attrezzi disponibili</label>${eqPicker(sel)}
+ <div class="hint" style="margin-top:8px">Il muro e il pavimento ci sono sempre. Senza attrezzi va bene lo stesso: usi solo il corpo.</div>
+ <button class="card row" id="pf" style="width:100%;border:0;color:var(--tx);text-align:left;margin-top:12px"><span style="width:26px;height:26px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:${fuori?'var(--gold)':'var(--card2)'};color:#2A1A47">${fuori?I('check'):''}</span><div style="flex:1"><b>Aggiungi anche "Fuori casa"</b><div class="small dim">Per quando sei in giro: solo esercizi senza attrezzi</div></div></button>
+ <button class="btn" id="pgo" style="margin-top:6px">Continua ${I('chev')}</button>`;
+  const pn=$('#pn');pn.oninput=()=>nm=pn.value;bindEq(m,sel,draw);$('#pf').onclick=()=>{fuori=!fuori;draw()};
+  $('#pgo').onclick=()=>{const n=(pn.value||'').trim()||'Casa';S.locs=[{id:uid(),n,ic:'home',eq:sel.slice()}];if(fuori)S.locs.push({id:uid(),n:'Fuori casa',ic:'pin',eq:[]});S.loc=S.locs[0].id;save();render()}};
+ draw();
+}
+function placeEdit(L,onDone){
+ const isNew=!L;L=L?{...L,eq:L.eq.slice()}:{id:uid(),n:'',ic:'home',eq:[]};
+ sheet('<div id="pe"></div>',(el,close)=>{const box=el.querySelector('#pe');
+  const draw=()=>{box.innerHTML=`<h2 style="margin-top:0">${isNew?'Nuovo luogo':'Modifica luogo'}</h2><label>Nome</label><input id="pen" value="${esc(L.n)}" placeholder="Es. Casa dei miei, Palestra" maxlength="24">
+  <label>Tipo</label><div class="seg"><button data-ic="home" class="${L.ic==='home'?'on':''}">Casa</button><button data-ic="pin" class="${L.ic==='pin'?'on':''}">Fuori / altro</button></div>
+  <label>Attrezzi disponibili</label>${eqPicker(L.eq)}
+  <button class="btn" id="pes" style="margin-top:14px">Salva</button>${!isNew&&S.locs.length>1?`<button class="btn danger" id="ped" style="margin-top:10px">Elimina luogo</button>`:''}`;
+   const pen=box.querySelector('#pen');pen.oninput=()=>L.n=pen.value;
+   box.querySelectorAll('[data-ic]').forEach(b=>b.onclick=()=>{L.ic=b.dataset.ic;draw()});bindEq(box,L.eq,draw);
+   box.querySelector('#pes').onclick=()=>{L.n=(L.n||'').trim();if(!L.n){toast('Dai un nome al luogo');return}if(isNew)S.locs.push(L);else S.locs=S.locs.map(x=>x.id===L.id?L:x);S.loc=L.id;save();close();onDone&&onDone();toast('Luogo salvato')};
+   const pd=box.querySelector('#ped');if(pd)pd.onclick=()=>{S.locs=S.locs.filter(x=>x.id!==L.id);if(S.loc===L.id)S.loc=S.locs[0].id;save();close();onDone&&onDone()}};
+  draw()});
+}
+function placesSheet(){
+ sheet('<div id="pl"></div>',(el,close)=>{const box=el.querySelector('#pl');
+  const draw=()=>{box.innerHTML=`<h2 style="margin-top:0">I tuoi luoghi</h2><p class="small mu">Scegli dove sei oggi. Per ogni luogo l'app sa quali attrezzi hai e prepara solo esercizi possibili.</p>
+  ${S.locs.map(l=>`<div class="card row" style="padding:10px 12px;${S.loc===l.id?'outline:2px solid var(--gold)':''}"><button data-sel="${l.id}" style="flex:1;background:none;border:0;color:var(--tx);text-align:left;display:flex;gap:10px;align-items:center;font:inherit">${I(l.ic||'home','ic gold')}<div><b>${esc(l.n)}</b><div class="small dim">${esc(eqText(l.eq))}</div></div></button><button class="chip" data-ed="${l.id}">Modifica</button></div>`).join('')}
+  ${S.locs.length<6?`<button class="btn sec" id="pla">${I('plus')} Aggiungi luogo</button>`:''}`;
+   box.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{S.loc=b.dataset.sel;save();close();render()});
+   box.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>placeEdit(S.locs.find(x=>x.id===b.dataset.ed),()=>{draw();render()}));
+   const a=box.querySelector('#pla');if(a)a.onclick=()=>placeEdit(null,()=>{draw();render()})};
+  draw()});
 }
 function testView(m,first){
  const T={push:10,squat:30,plank:45,mob:'quasi'};
@@ -950,7 +992,7 @@ function vHome(m){
  const doneToday=S.wk.some(w=>w.date===d);
  m.innerHTML=`<div class="row between"><span class="mu">${GGL[dIdx(d)]} ${fmt(d)}</span><div class="row"><span class="gold row" style="gap:4px">${I('flame')} ${st} ${st===1?'giorno':'giorni'}</span><button class="chip" id="set" aria-label="Impostazioni" style="padding:7px">${I('set')}</button></div></div>
  <h1 style="margin-top:8px">Ciao ${esc(S.name)}, pronto a muoverti?</h1>
- <div class="chips" style="margin-bottom:12px">${Object.entries(LOCS).map(([k,l])=>`<button class="chip ${S.loc===k?'on':''}" data-loc="${k}">${I(l.ic)} ${l.n}</button>`).join('')}</div>
+ <div class="chips" style="margin-bottom:12px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px">${S.locs.map(l=>`<button class="chip ${S.loc===l.id?'on':''}" data-loc="${l.id}" style="flex:none">${I(l.ic||'home')} ${esc(l.n)}</button>`).join('')}<button class="chip" id="plm" style="flex:none" aria-label="Gestisci luoghi">${I('plus')} Luoghi</button></div>
  ${!wkSet?`<button class="card row" id="setw" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('ball','ic gold')}<div style="flex:1"><b>Quando giochi questa settimana?</b><div class="small mu">Segna i giorni di calcio e il piano si sistema da solo</div></div>${I('chev')}</button>`:''}
  <div class="hero">
   <div class="small" style="color:var(--gold)">Settimana ${progWeek()} di 8 · ${ph.n} · ${esc(pl.done&&!homeFocus?'già fatta oggi':pl.why)}</div>
@@ -973,6 +1015,7 @@ function vHome(m){
  $('#prev').innerHTML=(F.mass?`<div class="card"><div class="small mu" style="margin-bottom:8px">Muscoli della settimana · serie fatte (obiettivo 10-20)</div>${muscleBars(weekSets())}</div>`:'')+uniq.map(s=>exRow(s.ex,s.type==='set'?s.sets+' serie × '+(s.range||MRANGE).join('-')+(s.ex.side?' per lato':'')+(s.kg?' · zaino '+String(s.kg).replace('.',',')+' kg':'')+(s.fixed?'':' · livello '+(s.lvl+1)+'/'+s.nl):s.reps?s.reps+' rip.'+(s.ex.side?' per lato':''):Math.round(s.secs/(s.ex.side?2:1))+' sec'+(s.ex.side?' per lato':''),s.type==='set'&&s.kg?{bag:s.ex.bag||'back'}:{})).join('');
  bindExRows(m);
  m.querySelectorAll('[data-loc]').forEach(b=>b.onclick=()=>{S.loc=b.dataset.loc;save();render()});
+ $('#plm').onclick=placesSheet;
  m.querySelectorAll('[data-dur]').forEach(b=>b.onclick=()=>{homeDur=+b.dataset.dur;durTouched=true;render()});
  $('#start').onclick=()=>startPlayer(steps,{kind:F.mass?'massa':'workout',focus:fc,dur:homeDur});
  $('#prot').onclick=protSheet;
@@ -1227,11 +1270,12 @@ function measForm(){
 }
 
 /* ---------- IMPOSTAZIONI ---------- */
-function importSheet(){sheet(`<h2 style="margin-top:0">Importa backup</h2><p class="small mu">Nell'altra versione dell'app: Impostazioni → Copia backup. Poi incolla qui.</p><textarea id="bt" rows="6" placeholder="Incolla qui il testo del backup"></textarea><div style="height:10px"></div><button class="btn" id="bgo">Importa</button>`,(e2,c2)=>{e2.querySelector('#bgo').onclick=()=>{try{const o=JSON.parse(e2.querySelector('#bt').value);if(!o||!o.name)throw 0;S={...DEF(),...o};save();c2();render();toast('Backup importato')}catch(x){toast('Testo del backup non valido')}}})}
+function importSheet(){sheet(`<h2 style="margin-top:0">Importa backup</h2><p class="small mu">Nell'altra versione dell'app: Impostazioni → Copia backup. Poi incolla qui.</p><textarea id="bt" rows="6" placeholder="Incolla qui il testo del backup"></textarea><div style="height:10px"></div><button class="btn" id="bgo">Importa</button>`,(e2,c2)=>{e2.querySelector('#bgo').onclick=()=>{try{const o=JSON.parse(e2.querySelector('#bt').value);if(!o||!o.name)throw 0;S={...DEF(),...o};migrateLocs();save();c2();render();toast('Backup importato')}catch(x){toast('Testo del backup non valido')}}})}
 function settings(){
  sheet(`<h2 style="margin-top:0">Impostazioni</h2>
  <label>Nome</label><input id="sn" value="${esc(S.name)}">
  <label>Livello</label><div class="seg" id="slv">${['Principiante','Intermedio','Avanzato'].map((n,i)=>`<button data-l="${i+1}" class="${S.level===i+1?'on':''}">${n}</button>`).join('')}</div>
+ <label>Luoghi e attrezzi</label><button class="btn sec" id="sloc">${I('pin')} I tuoi luoghi (${S.locs.length})</button>
  <label>Avvisi del timer</label><div class="chips"><button class="chip ${S.set.sound?'on':''}" id="ss">Beep</button><button class="chip ${S.set.vib?'on':''}" id="sv">Vibrazione</button><button class="chip ${S.set.voice!==false?'on':''}" id="svo">Voce del coach</button></div>
  <div class="hint">La vibrazione funziona su Android; su iPhone il browser non la permette, resta il beep.</div>
  <label>Programma</label><div class="small mu">Settimana ${progWeek()} di 8 · ${phaseOf().n} (dal ${fmt(S.start)})</div><button class="btn ghost" id="srest" style="margin-top:6px">Ricomincia il programma dalla settimana 1</button>
@@ -1241,6 +1285,7 @@ function settings(){
  <button class="btn danger" id="sreset" style="margin-top:20px">Cancella tutti i dati</button>`,(el,close)=>{
   let lv=S.level;el.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{lv=+b.dataset.l;el.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('on',x===b))});
   el.querySelector('#ss').onclick=e=>{S.set.sound=!S.set.sound;e.currentTarget.classList.toggle('on',S.set.sound);if(S.set.sound)beep()};
+  el.querySelector('#sloc').onclick=()=>{close();placesSheet()};
   el.querySelector('#sv').onclick=e=>{S.set.vib=!S.set.vib;e.currentTarget.classList.toggle('on',S.set.vib);vib(100)};
   el.querySelector('#svo').onclick=e=>{S.set.voice=S.set.voice===false;e.currentTarget.classList.toggle('on',S.set.voice!==false);if(S.set.voice!==false)COACH.say('Ciao! Sono il tuo coach. Spingiamo!',true)};
   el.querySelector('#srest').onclick=()=>{S.start=today();save();toast('Programma ripartito dalla settimana 1')};
