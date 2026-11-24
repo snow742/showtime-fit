@@ -564,10 +564,10 @@ const MEAS=[['peso','Peso','kg','Al mattino, dopo il bagno, prima di mangiare'],
 
 /* ---------- stato e salvataggio ---------- */
 const KEY='showtimefit_v1';
-const DEF=()=>({v:1,body:null,spent:0,owned:['th-oro','of-bianca'],eqp:{theme:'th-oro',outfit:'of-bianca'},seenLv:1,favs:[],plans:[],sex:'m',sport:'',job:'',name:'',pain:{},ready:null,prof:{},calTime:'18:30',level:0,start:today(),tests:[],loc:'',locs:null,set:{sound:true,vib:true},calW:{},calLog:[],wk:[],pauses:[],meas:[],medals:{},dismissInstall:false,upd:0,mass:{lv:{},kg:{},log:[]},prot:{f:1.8,days:{},custom:[]}});
+const DEF=()=>({v:1,kadj:0,kadjLog:[],readyLog:[],deloadUntil:null,boostUntil:null,lastLoadCheck:null,chDone:[],tourDone:false,fontK:1,jolly:0,jollyUsed:[],body:null,spent:0,owned:['th-oro','of-bianca'],eqp:{theme:'th-oro',outfit:'of-bianca'},seenLv:1,favs:[],plans:[],sex:'m',sport:'',job:'',name:'',pain:{},ready:null,prof:{},calTime:'18:30',level:0,start:today(),tests:[],loc:'',locs:null,set:{sound:true,vib:true},calW:{},calLog:[],wk:[],pauses:[],meas:[],medals:{},dismissInstall:false,upd:0,mass:{lv:{},kg:{},log:[]},prot:{f:1.8,days:{},custom:[]}});
 let S=DEF();
 try{const raw=localStorage.getItem(KEY);if(raw)S={...DEF(),...JSON.parse(raw)}}catch(e){}
-function migrateLocs(){S.owned=S.owned||['th-oro','of-bianca'];S.eqp=S.eqp||{theme:'th-oro',outfit:'of-bianca'};S.spent=S.spent||0;S.seenLv=S.seenLv||1;S.favs=S.favs||[];S.plans=S.plans||[];S.pain=S.pain||{};S.prof=S.prof||{};if(S.prot&&!S.prot.goal)S.prot.goal='massa';if(S.name&&!S.sport){S.sport='calcio';S.job=S.job||'autista'}if(!S.locs&&S.name){S.locs=[{id:'giardini',n:'Giardini',ic:'home',eq:['tappetino','sedia','zaino','elastico']},{id:'saponara',n:'Saponara',ic:'home',eq:['tappetino','sedia','zaino','elastico','sbarra']},{id:'fuori',n:'Fuori casa',ic:'pin',eq:[]}]}if(S.locs&&S.locs.length&&!S.locs.some(l=>l.id===S.loc))S.loc=S.locs[0].id}
+function migrateLocs(){['kadjLog','readyLog','chDone','jollyUsed'].forEach(k=>S[k]=S[k]||[]);S.kadj=S.kadj||0;S.jolly=S.jolly||0;S.fontK=S.fontK||1;if(S.name&&S.tourDone===undefined)S.tourDone=true;S.owned=S.owned||['th-oro','of-bianca'];S.eqp=S.eqp||{theme:'th-oro',outfit:'of-bianca'};S.spent=S.spent||0;S.seenLv=S.seenLv||1;S.favs=S.favs||[];S.plans=S.plans||[];S.pain=S.pain||{};S.prof=S.prof||{};if(S.prot&&!S.prot.goal)S.prot.goal='massa';if(S.name&&!S.sport){S.sport='calcio';S.job=S.job||'autista'}if(!S.locs&&S.name){S.locs=[{id:'giardini',n:'Giardini',ic:'home',eq:['tappetino','sedia','zaino','elastico']},{id:'saponara',n:'Saponara',ic:'home',eq:['tappetino','sedia','zaino','elastico','sbarra']},{id:'fuori',n:'Fuori casa',ic:'pin',eq:[]}]}if(S.locs&&S.locs.length&&!S.locs.some(l=>l.id===S.loc))S.loc=S.locs[0].id}
 migrateLocs();
 let dbRef=null,syncState='local',saveT=null,writing=false,pendingWrite=false;
 function save(){S.upd=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}clearTimeout(saveT);saveT=setTimeout(pushDb,1500)}
@@ -658,7 +658,14 @@ const PHASES=[{k:'base',n:'Base',w:[1,2],c:'#B48CF0',d:'Impari la tecnica: 3 ser
  {k:'costr',n:'Costruzione',w:[3,5],c:'#FDB927',d:'Serie vicino al limite: ogni settimana una ripetizione o una bottiglia in più.',note:'fermati con 1-2 ripetizioni nel serbatoio'},
  {k:'scarico',n:'Scarico',w:[6,6],c:'#B4B2A9',d:'Metà delle serie: i muscoli crescono mentre recuperi.',note:'settimana leggera: niente sforzi al limite'},
  {k:'spinta',n:'Spinta finale',w:[7,8],c:'#F09595',d:'4 serie, discesa in 4 secondi, varianti più dure. Poi test e nuovo ciclo.',note:'discesa in 4 secondi, fino quasi al limite'}];
-function phaseOf(w=progWeek()){return PHASES.find(p=>w>=p.w[0]&&w<=p.w[1])}
+function phaseOf(w=progWeek()){if(arguments.length===0&&S.deloadUntil&&today()<=S.deloadUntil)return {...PHASES[2],n:'Scarico anticipato',d:'Settimana leggera anticipata: segnali di stanchezza nelle ultime sessioni.'};return PHASES.find(p=>w>=p.w[0]&&w<=p.w[1])}
+const boostOn=()=>S.boostUntil&&today()<=S.boostUntil;
+function checkLoad(){if(S.lastLoadCheck===today())return null;S.lastLoadCheck=today();const rec=S.wk.filter(w=>diffD(w.date,today())<=10&&!w.partial&&w.rpe);const rd=S.readyLog.filter(r=>diffD(r.date,today())<=7);
+ if(!(S.deloadUntil&&today()<=S.deloadUntil)){const hard=rec.length>=3&&rec.reduce((a,w)=>a+w.rpe,0)/rec.length>=8.5;const tired=rd.length>=3&&rd.filter(r=>r.adj<0).length>=2;
+  if((hard||tired)&&progWeek()!==6){S.deloadUntil=addD(today(),6);S.boostUntil=null;save();return{t:'deload',why:hard?'le ultime sessioni sono state molto dure':'nei controlli recenti eri spesso stanco'}}}
+ const logs=S.mass.log.filter(l=>diffD(l.date,today())<=14);const easy=rec.length>=4&&rec.reduce((a,w)=>a+w.rpe,0)/rec.length<=5.5&&logs.length>=6;
+ if(easy&&!boostOn()&&!(S.deloadUntil&&today()<=S.deloadUntil)){S.boostUntil=addD(today(),13);save();return{t:'boost',why:'gli allenamenti ti risultano facili'}}
+ save();return null}
 function recDur(){let d={1:30,2:45,3:60}[level()]||45;const ra=readyAdj();if(ra<0)d-=15;if(ra>0)d+=15;if(painOn().length)d=Math.min(d,45);if(phaseOf().k==='scarico')d=Math.min(d,30);return Math.max(20,Math.min(60,d))}
 function recWhy(){const ra=readyAdj();const lv=['','principiante','intermedio','avanzato'][level()];let t='livello '+lv;if(ra<0)t+=', oggi giornata da gestire';else if(ra>0)t+=', oggi sei in forma';if(phaseOf().k==='scarico')t+=', settimana di scarico';if(painOn().length)t+=', hai fastidi';return t}
 function schedaSheet(steps,title,D){
@@ -731,7 +738,7 @@ function readySheet(onGo){
    <button class="btn" id="rgo" style="margin-top:10px">${I('play')} Inizia</button>`;
    box.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{sl=+b.dataset.s;draw()});box.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{en=+b.dataset.e;draw()});box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mu=+b.dataset.m;draw()});
    box.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{pain[b.dataset.z]=!pain[b.dataset.z];draw()});
-   const fin=mob=>{S.ready={date:today(),s:sc,adj,sl,en,mu};S.pain=pain;save();close();onGo(mob)};
+   const fin=mob=>{S.ready={date:today(),s:sc,adj,sl,en,mu};S.readyLog=S.readyLog.filter(r=>r.date!==today());S.readyLog.push({date:today(),adj});if(S.readyLog.length>30)S.readyLog.shift();S.pain=pain;save();close();onGo(mob)};
    box.querySelector('#rgo').onclick=()=>fin(false);const rm=box.querySelector('#rmob');if(rm)rm.onclick=()=>fin(true)};
   draw()});
 }
@@ -838,8 +845,8 @@ function buildMass(D,loc){
 function applyMass(res){const ups=[];
  Object.entries(res).forEach(([slot,r])=>{if(!r.reps.length)return;S.mass.log.push({date:today(),slot:slot.split('|')[0],ex:r.ex,kg:r.kg,reps:r.reps});slot=slot.split('|')[0];
   const sl=MASS.find(x=>x.id===slot);const lv=r.lvl;if(!sl)return;
-  if(r.fixed||!sl||r.prog===false)return;
-  if(r.reps.length>=r.sets&&r.reps.every(x=>x>=(r.top||MRANGE[1]))){
+  if(r.fixed||!sl||(r.prog===false&&!boostOn()))return;
+  if(r.reps.length>=r.sets&&r.reps.every(x=>x>=(r.top||MRANGE[1])-(boostOn()?2:0))){
    if(lv<sl.lad.length-1){S.mass.lv[slot]=lv+1;S.mass.kg[slot]=EXM[sl.lad[lv+1]].bag==='hand'?3:0;ups.push(sl.n+': passi a '+EXM[sl.lad[lv+1]].n)}
    else if(sl.load){S.mass.kg[slot]=Math.round(((r.kg||0)+1.5)*10)/10;ups.push(EXM[r.ex].n+': zaino +1,5 kg (ora '+String(S.mass.kg[slot]).replace('.',',')+' kg)')}
    else ups.push(EXM[r.ex].n+': massimo raggiunto, rallenta la discesa');
@@ -862,7 +869,16 @@ const GOALS={massa:['Massa',300,'Leggero surplus: crescita con poco grasso'],ric
 function kcalTarget(){const w=bodyW(),h=S.prof&&S.prof.h,a=S.prof&&S.prof.age;if(!w||!h||!a)return null;
  const bmr=10*w+6.25*h-5*a+(S.sex==='f'?-161:5);const base={1:1.35,2:1.5,3:1.7}[JB().kind]||1.4;
  const sd=SP().none?0:Math.max((S.calW[monday(today())]||[]).length,2);const f=base+Math.min(0.3,sd*0.06)+0.06;
- return Math.round((bmr*f+(GOALS[S.prot.goal||'massa'][1]))/50)*50}
+ return Math.round((bmr*f+(GOALS[S.prot.goal||'massa'][1])+(S.kadj||0))/50)*50}
+function trendOf(k,days=21){const ms=S.meas.filter(x=>x[k]!=null&&x[k]!==''&&diffD(x.date,today())<=days).sort((a,b)=>a.date.localeCompare(b.date));if(ms.length<2)return null;const a=ms[0],b=ms[ms.length-1];const dd=diffD(a.date,b.date);if(dd<10)return null;return{wk:(+b[k]-+a[k])/dd*7,pct:((+b[k]-+a[k])/+a[k])/dd*7*100,days:dd}}
+function adaptCalories(){if(!S.prof||!S.prof.h)return null;const last=S.kadjLog[S.kadjLog.length-1];if(last&&diffD(last.date,today())<7)return null;
+ const w=trendOf('peso');if(!w)return null;const v=trendOf('vita');const g=S.prot.goal||'massa';let d=0,why='';
+ if(g==='massa'){if(w.pct<0.1){d=150;why='il peso non sale'}else if(w.pct>0.75||(v&&v.wk>0.5)){d=-100;why='stai salendo troppo in fretta'}}
+ else if(g==='ricomp'){if(w.pct<-0.5){d=100;why='stai perdendo peso troppo in fretta, rischi di perdere muscolo'}else if(w.pct>0.3&&(!v||v.wk>=0)){d=-100;why='peso e vita salgono'}else if(v&&v.wk>0.3){d=-100;why='la vita non scende'}}
+ else if(g==='def'){if(w.pct>-0.25){d=-150;why='il peso scende troppo piano'}else if(w.pct<-1.2){d=150;why='stai perdendo troppo in fretta'}}
+ else{if(w.pct>0.3){d=-100;why='il peso sale'}else if(w.pct<-0.3){d=100;why='il peso scende'}}
+ S.kadjLog.push({date:today(),d,why:why||'andamento in linea con l\'obiettivo',w:Math.round(w.pct*100)/100});if(S.kadjLog.length>20)S.kadjLog.shift();
+ if(d){S.kadj=Math.max(-600,Math.min(600,(S.kadj||0)+d))}save();return d?{d,why}:null}
 function autoPasto(){const h=new Date().getHours();return h<11?'Colazione':h<15?'Pranzo':h<19?'Spuntino':'Cena'}
 function ring(v,t,sz=96){const p=t?Math.min(1,v/t):0;const c=2*Math.PI*40;return `<svg width="${sz}" height="${sz}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#2E1C4F" stroke-width="12"/><circle cx="50" cy="50" r="40" fill="none" stroke="${p>=1?'#97C459':'#FDB927'}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c*(1-p)).toFixed(1)}" transform="rotate(-90 50 50)"/><text x="50" y="52" text-anchor="middle" font-size="22" font-weight="700" fill="#fff" font-family="Barlow,sans-serif">${Math.round(v)}</text><text x="50" y="68" text-anchor="middle" font-size="11" fill="#B4A6CF" font-family="Barlow,sans-serif">${t?'di '+t+' g':'g'}</text></svg>`}
 function protSheet(){
@@ -888,7 +904,8 @@ function protSheet(){
    <h2>Oggi</h2>${list.length?PASTI.filter(p=>list.some(x=>x.t===p)).map(p=>`<div class="card" style="padding:10px 12px"><b>${p}</b>${list.filter(x=>x.t===p).map(x=>`<div class="row between small" style="margin-top:6px"><span style="flex:1">${esc(x.n)}</span><span class="row"><span class="gold">${x.g} g</span><span class="mu" style="min-width:58px;text-align:right">${x.k||0} kcal</span><button class="chip" data-del="${x.id}" style="padding:4px 7px" aria-label="Elimina">${I('x')}</button></span></div>`).join('')}</div>`).join(''):'<div class="empty">Ancora niente oggi.</div>'}
    <h2>Ultimi 7 giorni</h2><div class="card"><div style="display:flex;gap:6px;align-items:flex-end;height:70px">${days.map(d=>{const x=kcalDay(d),y=protDay(d);const h=kt?Math.min(100,x/kt*100):(x?60:0);const ok=t&&y>=t;return `<div style="flex:1;text-align:center"><div style="height:${Math.max(3,h*0.55)}px;background:${ok?'#FDB927':x?'#B48CF0':'#2E1C4F'};border-radius:3px;${d===today()?'outline:1px solid #fff':''}"></div><div class="small dim" style="font-size:11px">${GG[dIdx(d)][0]}</div></div>`}).join('')}</div><div class="small dim" style="margin-top:4px">Altezza = calorie · oro = proteine raggiunte</div></div>
    <label>Proteine per kg di peso</label><div class="seg" id="pf">${[1.6,1.8,2.0].map(f=>`<button data-k="${f}" class="${S.prot.f===f?'on':''}">${String(f.toFixed(1)).replace('.',',')} g</button>`).join('')}</div>
-   <div class="hint">Calorie stimate da peso, altezza, età, lavoro e sport (formula Mifflin-St Jeor): è un punto di partenza. Se in 3-4 settimane il peso non va nella direzione voluta, aggiusta di 150-200 kcal.</div>
+   <div class="card small" style="margin-top:10px;padding:10px 12px"><b class="gold">Regolazione automatica</b><div class="mu">${(()=>{const l=S.kadjLog[S.kadjLog.length-1];return (S.kadj?'Correzione attuale: '+(S.kadj>0?'+':'')+S.kadj+' kcal. ':'')+(l?'Ultimo controllo '+fmt(l.date)+': '+esc(l.why)+'.':'Ogni settimana confronto peso e vita (servono almeno 2 pesate a 10+ giorni di distanza) e correggo le calorie di 100-150.')})()}</div></div>
+   <div class="hint">Calorie stimate da peso, altezza, età, lavoro e sport (formula Mifflin-St Jeor), poi corrette in base a come rispondi.</div>
    ${!need?`<button class="chip" id="pedit" style="margin-top:8px">${I('set')} Modifica peso, altezza, età</button>`:''}`;
    el.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{S.prot.goal=b.dataset.g;save();draw()});
    el.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{pasto=b.dataset.p;draw()});
@@ -990,13 +1007,35 @@ function planWeek(mon){
  return res;
 }
 
+/* ---------- sfide ---------- */
+const CHALLENGES=[
+ {id:'w4',n:'4 allenamenti in settimana',goal:4,f:mon=>S.wk.filter(w=>monday(w.date)===mon&&!w.partial).length},
+ {id:'push100',n:'100 piegamenti in settimana',goal:100,f:mon=>S.mass.log.filter(l=>monday(l.date)===mon&&/^push/.test(l.ex)).reduce((a,l)=>a+l.reps.reduce((x,y)=>x+y,0),0)},
+ {id:'min150',n:'150 minuti di allenamento',goal:150,f:mon=>S.wk.filter(w=>monday(w.date)===mon).reduce((a,w)=>a+(w.min||0),0)},
+ {id:'act6',n:'6 giorni attivi su 7',goal:6,f:mon=>[...Array(7)].filter((_,i)=>activeDays().has(addD(mon,i))).length},
+ {id:'sets40',n:'40 serie di massa',goal:40,f:mon=>S.mass.log.filter(l=>monday(l.date)===mon).reduce((a,l)=>a+l.reps.length,0)},
+ {id:'pause5',n:'5 pause attive al lavoro',goal:5,f:mon=>S.pauses.filter(d=>monday(d)===mon).length},
+ {id:'prot5',n:'Proteine raggiunte 5 giorni',goal:5,f:mon=>{const t=protTarget();return t?[...Array(7)].filter((_,i)=>protDay(addD(mon,i))>=t).length:0}}];
+function chOfWeek(mon=monday(today())){const wn=Math.floor(diffD('2024-01-01',mon)/7);return CHALLENGES[wn%CHALLENGES.length]}
+function chState(mon=monday(today())){const c=chOfWeek(mon);const v=Math.min(c.goal,c.f(mon));const done=v>=c.goal;if(done&&!S.chDone.includes(mon)){S.chDone.push(mon);save();toast('Sfida completata! +50 monete')}return{c,v,done}}
+function chCard(){const {c,v,done}=chState();return `<div class="card"><div class="row between"><div><div class="small gold">${I('flame','ic')} Sfida della settimana</div><b style="font-size:16px">${esc(c.n)}</b></div><div style="font:700 22px 'Barlow Condensed',sans-serif;color:${done?'var(--ok)':'var(--tx)'}">${v}/${c.goal}</div></div>
+ <div style="height:8px;background:var(--card2);border-radius:4px;margin:8px 0"><div style="width:${Math.round(v/c.goal*100)}%;height:100%;background:${done?'var(--ok)':'var(--gold)'};border-radius:4px"></div></div>
+ <div class="row between"><span class="small dim">${done?'Completata: +50 monete':'Premio: 50 monete · finisce domenica'}</span><button class="chip" id="chsh" style="padding:6px 10px">${I('copy')} Sfida un amico</button></div></div>`}
+function chShare(){const {c,v,done}=chState();const txt=`${S.name} ti sfida su Showtime Fit: "${c.n}" questa settimana. Io sono a ${v}/${c.goal}${done?' (completata!)':''}. Ci stai? snow742.github.io/showtime-fit`;
+ const W=1080,H=1080,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');const gr=g.createLinearGradient(0,0,W,H);gr.addColorStop(0,'#3A1A6E');gr.addColorStop(1,'#140B24');g.fillStyle=gr;g.fillRect(0,0,W,H);
+ g.fillStyle='#FDB927';g.font='700 54px Barlow, sans-serif';g.fillText('SFIDA DELLA SETTIMANA',80,150);g.fillStyle='#fff';g.font='700 76px Barlow, sans-serif';const words=c.n.split(' ');let line='',y=290;words.forEach(w=>{const t=line?line+' '+w:w;if(g.measureText(t).width>900){g.fillText(line,80,y);y+=90;line=w}else line=t});g.fillText(line,80,y);
+ g.fillStyle='rgba(255,255,255,.12)';g.fillRect(80,y+80,920,40);g.fillStyle=done?'#97C459':'#FDB927';g.fillRect(80,y+80,920*v/c.goal,40);g.fillStyle='#F3EEFB';g.font='600 48px Barlow, sans-serif';g.fillText(`${S.name}: ${v} / ${c.goal}${done?'  ✓':''}`,80,y+200);
+ g.fillStyle='#B4A6CF';g.font='500 40px Barlow, sans-serif';g.fillText('Ci stai? Scarica Showtime Fit',80,H-150);g.fillStyle='#8A7AAA';g.font='500 32px Barlow, sans-serif';g.fillText('snow742.github.io/showtime-fit',80,H-90);
+ cv.toBlob(async b=>{try{const f=new File([b],'sfida-showtime.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:txt});return}}catch(e){if(e&&e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(txt);toast('Messaggio della sfida copiato: incollalo su WhatsApp')}catch(e){toast('Condivisione non disponibile')}},'image/png')}
+
 /* ---------- premi ---------- */
 const RANKS=[[1,'Rookie'],[3,'Titolare'],[6,'Capitano'],[10,'All-Star'],[15,'MVP'],[20,'Leggenda'],[30,'Hall of Fame']];
 function xpTotal(){let x=0;S.wk.forEach(w=>{x+=(w.min||0)*2+(w.partial?0:20)});x+=S.mass.log.reduce((a,l)=>a+l.reps.length*3,0);x+=S.pauses.length*10+S.calLog.length*15+Object.keys(S.medals).length*50;x+=cyclesDone()*300;return x}
 function cyclesDone(){return Math.floor(Math.max(0,diffD(S.start,today()))/56)}
 function lvOf(x){let lv=1,need=100,acc=0;while(x>=acc+need){acc+=need;lv++;need=Math.round(100*Math.pow(lv,1.35))}return{lv,cur:x-acc,need}}
 function rankOf(lv){let r=RANKS[0][1];RANKS.forEach(([l,n])=>{if(lv>=l)r=n});return r}
-function coinsEarned(){return S.wk.filter(w=>!w.partial).length*10+S.pauses.length*3+S.calLog.length*5+Object.keys(S.medals).length*25+cyclesDone()*150+(lvOf(xpTotal()).lv-1)*20}
+function coinsEarned(){return (S.chDone||[]).length*50+S.wk.filter(w=>!w.partial).length*10+S.pauses.length*3+S.calLog.length*5+Object.keys(S.medals).length*25+cyclesDone()*150+(lvOf(xpTotal()).lv-1)*20}
 const coins=()=>coinsEarned()-(S.spent||0);
 const SHOP=[
  {id:'th-oro',t:'theme',n:'Tema oro',c:'#FDB927',p:0},{id:'th-verde',t:'theme',n:'Tema verde campo',c:'#7FD15B',p:120},{id:'th-azzurro',t:'theme',n:'Tema azzurro',c:'#5EC2F2',p:120},{id:'th-rosso',t:'theme',n:'Tema rosso fuoco',c:'#FF6B5B',p:180},{id:'th-argento',t:'theme',n:'Tema argento',c:'#D8DCE6',p:250},
@@ -1006,6 +1045,7 @@ function outfitColor(){const o=SHOP.find(x=>x.id===(S.eqp&&S.eqp.outfit));return
 function applyTheme(){const t=SHOP.find(x=>x.id===(S.eqp&&S.eqp.theme));try{document.documentElement.style.setProperty('--gold',t?t.c:'#FDB927')}catch(e){}}
 function rewardsCard(){const L=lvOf(xpTotal());return `<div class="card" style="background:linear-gradient(135deg,#3A1A6E,#22143B);border:1px solid var(--line)"><div class="row between"><div><div class="small mu">Livello ${L.lv}</div><div style="font:700 26px 'Barlow Condensed',sans-serif;color:var(--gold)">${rankOf(L.lv)}</div></div><div style="text-align:right"><div class="small mu">Monete</div><div style="font:700 26px 'Barlow Condensed',sans-serif">${coins()} <span class="gold">◎</span></div></div></div>
  <div style="height:8px;background:var(--card2);border-radius:4px;margin:8px 0 4px"><div style="width:${Math.round(L.cur/L.need*100)}%;height:100%;background:var(--gold);border-radius:4px"></div></div><div class="small dim">${L.cur} / ${L.need} XP al prossimo livello · prossimo titolo: ${esc((RANKS.find(r=>r[0]>L.lv)||[0,'massimo'])[1])}</div>
+ <div class="small mu" style="margin-top:6px">Giorni jolly: <b class="gold">${S.jolly||0}/2</b> · ne guadagni uno ogni 7 giorni di fila e salva la serie se salti un giorno.</div>
  <button class="btn sec" id="shop" style="margin-top:10px">${I('star')} Spogliatoio: temi e magliette</button></div>`}
 function shopSheet(){sheet('<div id="sh"></div>',(el,close)=>{const box=el.querySelector('#sh');const draw=()=>{const cd=cyclesDone();
  const item=x=>{const own=S.owned.includes(x.id)||x.p===0&&!x.cycle||(x.cycle&&cd>=1);const on=S.eqp[x.t]===x.id;return `<button class="card row" data-it="${x.id}" style="margin:0;border:0;color:var(--tx);text-align:left;padding:10px;${on?'outline:2px solid var(--gold)':''}"><span style="width:34px;height:34px;border-radius:${x.t==='theme'?'50%':'9px'};background:${x.c};flex:none;border:2px solid #1B0F2E"></span><div style="flex:1;min-width:0"><b style="font-weight:500;font-size:14px">${esc(x.n)}</b><div class="small ${own?'dim':'gold'}">${on?'In uso':own?'Tocca per usare':x.cycle?'Completa un ciclo di 8 settimane':x.p+' ◎'}</div></div></button>`};
@@ -1019,7 +1059,9 @@ function shopSheet(){sheet('<div id="sh"></div>',(el,close)=>{const box=el.query
 
 /* streak e medaglie */
 function activeDays(){const s=new Set();S.wk.forEach(w=>s.add(w.date));S.pauses.forEach(p=>s.add(p));S.calLog.forEach(c=>s.add(c.date));return s}
-function streak(){const a=activeDays();let d=today();if(!a.has(d))d=addD(d,-1);let n=0;while(a.has(d)){n++;d=addD(d,-1)}return n}
+function streak(){const a=activeDays();const J=new Set(S.jollyUsed||[]);let d=today();if(!a.has(d))d=addD(d,-1);let n=0;while(a.has(d)||J.has(d)){if(a.has(d))n++;d=addD(d,-1)}return n}
+function jollyCheck(){const a=activeDays();const y=addD(today(),-1),yy=addD(today(),-2);if(a.has(y)||(S.jollyUsed||[]).includes(y))return null;if((a.has(yy)||(S.jollyUsed||[]).includes(yy))&&S.jolly>0){S.jolly--;S.jollyUsed.push(y);save();return y}return null}
+function jollyEarn(){const st=streak();if(st>0&&st%7===0&&S.jolly<2&&!(S.jollyEarned||[]).includes(today())){S.jolly++;S.jollyEarned=[...(S.jollyEarned||[]),today()].slice(-10);save();return true}return false}
 function bestStreak(){const a=[...activeDays()].sort();let best=0,cur=0,prev=null;for(const d of a){cur=(prev&&diffD(prev,d)===1)?cur+1:1;best=Math.max(best,cur);prev=d}return best}
 function monthSolid(){const a=activeDays();let runs=0;let mon=monday(today());for(let i=0;i<60;i++){let c=0;for(let j=0;j<7;j++)if(a.has(addD(mon,j)))c++;if(c>=2){runs++;if(runs>=4)return true}else if(i>0)runs=0;mon=addD(mon,-7)}return false}
 const MEDALS=[
@@ -1046,11 +1088,24 @@ function closeLayer(L){const i=LAYERS.indexOf(L);if(i<0)return;LAYERS.splice(i,1
 window.addEventListener('popstate',()=>{if(skipPop>0){clearTimeout(flushT);flushQ();return}const L=LAYERS.pop();if(L)L.fn()});
 let tabL=null;
 function goTab(k){if(k===TAB){render();return}if(TAB==='home'&&k!=='home'&&!tabL){tabL=openLayer(()=>{tabL=null;TAB='home';render()})}else if(k==='home'&&tabL){closeLayer(tabL);tabL=null}TAB=k;render()}
-function sheet(html,onMount){const bg=document.createElement('div');bg.className='sheet-bg';bg.innerHTML=`<div class="sheet"><button class="sx" aria-label="Chiudi">${I('x')}</button><div class="grab"></div>${html}</div>`;
+function sheet(html,onMount){const bg=document.createElement('div');bg.className='sheet-bg';bg.innerHTML=`<div class="sheet" style="zoom:${S.fontK||1}"><button class="sx" aria-label="Chiudi">${I('x')}</button><div class="grab"></div>${html}</div>`;
  const remove=()=>bg.remove();const L=openLayer(remove);const close=()=>{if(!bg.isConnected)return;remove();closeLayer(L)};
  bg.addEventListener('click',e=>{if(e.target===bg)close()});bg.querySelector('.sx').onclick=close;document.body.appendChild(bg);onMount&&onMount(bg.firstChild,close);return close}
 function confirmBox(msg,yes,cb){sheet(`<h2 style="margin-top:0">${esc(msg)}</h2><div class="grid2"><button class="btn sec" data-n>Annulla</button><button class="btn danger" data-y>${esc(yes)}</button></div>`,(el,close)=>{el.querySelector('[data-n]').onclick=close;el.querySelector('[data-y]').onclick=()=>{close();cb()}})}
-function render(){applyTheme();
+function tour(){if(document.querySelector('.tourbg'))return;const SL=[
+ ['home','La tua home','Ogni giorno trovi la sessione giusta per te. Scegli dove sei, quanto tempo hai e tocca Inizia. "Vedi la scheda completa" ti mostra tutto prima di partire.'],
+ ['cal','La settimana','Segna i giorni di '+SP().w+': le sessioni A, B e C si spostano da sole. Da qui puoi mettere gli allenamenti nel calendario del telefono.'],
+ ['list','Esercizi e schede','Tutti gli esercizi divisi per muscolo, con l\'omino che ti mostra il movimento. Salva i preferiti e crea le tue schede, o usa quelle pronte.'],
+ ['vol','Il coach','Durante l\'allenamento il coach conta, corregge e ti carica a voce. Con la fotocamera (versione GitHub) riconosce la postura e conta le ripetizioni.'],
+ ['medal','Premi e progressi','Livelli, monete, sfide settimanali e un trofeo a fine ciclo. In Corpo segui misure e foto, in Progressi vedi quanto sei migliorato.']];
+ let i=0;const bg=document.createElement('div');bg.className='sheet-bg tourbg';bg.style.alignItems='center';bg.style.justifyContent='center';document.body.appendChild(bg);
+ const draw=()=>{const [ic,t,d]=SL[i];bg.innerHTML=`<div class="sheet" style="border-radius:22px;margin:16px;max-width:420px;zoom:${S.fontK||1}"><div style="text-align:center;padding:10px 4px"><div style="width:72px;height:72px;border-radius:20px;background:var(--pur);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:var(--gold)">${I(ic).replace('class="ic"','class="ic" style="width:36px;height:36px"')}</div><div class="small gold">${i+1} di ${SL.length}</div><h1 style="margin:4px 0 8px">${t}</h1><p class="mu" style="line-height:1.5">${d}</p>
+  <div class="row" style="justify-content:center;gap:6px;margin:10px 0">${SL.map((_,k)=>`<span style="width:${k===i?18:7}px;height:7px;border-radius:4px;background:${k===i?'var(--gold)':'var(--card2)'}"></span>`).join('')}</div>
+  <div class="row" style="gap:8px"><button class="btn ghost" id="tsk">${i?'Indietro':'Salta'}</button><button class="btn" id="tnx">${i<SL.length-1?'Avanti':'Iniziamo!'}</button></div></div></div>`;
+  bg.querySelector('#tsk').onclick=()=>{if(i){i--;draw()}else fin()};bg.querySelector('#tnx').onclick=()=>{if(i<SL.length-1){i++;draw()}else fin()}};
+ const fin=()=>{bg.remove();S.tourDone=true;save()};draw()}
+function applyFont(){try{const k=S.fontK||1;document.getElementById('app').style.zoom=k;document.querySelectorAll('.sheet,.player').forEach(x=>x.style.zoom=k)}catch(e){}}
+function render(){applyTheme();applyFont();if(S.name&&S.level&&S.locs&&!S.tourDone&&!document.querySelector('.tourbg'))setTimeout(tour,300);
  if(!S.name||!S.level){$('#tabs').style.display='none';return onboarding()}
  $('#tabs').style.display='';
  $('#tabs').innerHTML=TABS.map(([k,n,ic])=>`<button class="${TAB===k?'on':''}" data-tab="${k}">${I(ic)}${n}</button>`).join('');
@@ -1152,6 +1207,7 @@ function testView(m,first){
 /* ---------- HOME ---------- */
 let homeDur=20,homeFocus=null,durTouched=false;
 function vHome(m){
+ if(!vHome.ran||vHome.ran!==today()){vHome.ran=today();setTimeout(()=>{const msgs=[];const j=jollyCheck();if(j)msgs.push('Giorno jolly usato per '+fmt(j)+': la serie continua');const ld=checkLoad();if(ld)msgs.push(ld.t==='deload'?'Settimana leggera anticipata: '+ld.why:'Acceleratore attivo: '+ld.why);const ca=adaptCalories();if(ca)msgs.push('Calorie '+(ca.d>0?'+':'')+ca.d+' kcal: '+ca.why);if(msgs.length){sheet(`<h2 style="margin-top:0">Aggiornamenti</h2>${msgs.map(t=>`<div class="card small" style="padding:10px 12px">${esc(t)}</div>`).join('')}<button class="btn" id="upok">Ok</button>`,(e,c)=>{e.querySelector('#upok').onclick=()=>{c();render()}})}},600)}
  const d=today(),pl=planFor(d),fc=homeFocus||pl.focus,F=FOCUS[fc];if(!durTouched)homeDur=F.mass?recDur():20;const ph=phaseOf();
  const st=streak(),wkSet=!!S.calW[monday(d)];
  const steps=buildWorkout(fc,homeDur,S.loc);const nEx=new Set(steps.filter(s=>(s.type==='work'||s.type==='set')&&s.phase==='main').map(s=>s.ex.id)).size;
@@ -1180,6 +1236,9 @@ function vHome(m){
  ${retest?`<button class="card row" id="rt" style="width:100%;border:0;color:var(--tx);text-align:left;margin-top:12px">${I('target','ic gold')}<div style="flex:1"><b>È ora di rifare il test</b><div class="small mu">Sono passate 4 settimane: vediamo i progressi</div></div>${I('chev')}</button>`:''}
  <h2>Nel programma di oggi</h2>
  <div id="prev"></div>
+ ${chCard()}
+ ${(S.deloadUntil&&today()<=S.deloadUntil)?`<div class="card small" style="border:1px solid var(--bad)"><b style="color:var(--bad)">Settimana leggera anticipata</b><div class="mu">Fino al ${fmt(S.deloadUntil)} meno serie e niente sforzi al limite: recuperi e poi riparti più forte.</div></div>`:boostOn()?`<div class="card small" style="border:1px solid var(--ok)"><b style="color:var(--ok)">Acceleratore attivo</b><div class="mu">Fino al ${fmt(S.boostUntil)} gli esercizi salgono di livello 2 ripetizioni prima.</div></div>`:''}
+ ${(()=>{const m=S.meas.filter(x=>x.peso).sort((a,b)=>a.date.localeCompare(b.date)).pop();return S.prof&&S.prof.h&&(!m||diffD(m.date,today())>=7)?`<button class="card row" id="weigh" style="width:100%;border:0;color:var(--tx);text-align:left">${I('ruler','ic gold')}<div style="flex:1"><b>Pesata della settimana</b><div class="small mu">Serve per regolare le calorie da sola</div></div>${I('plus','ic gold')}</button>`:''})()}
  ${!S.body?`<button class="card row" id="bqh" style="width:100%;border:1px dashed var(--gold);color:var(--tx);text-align:left;margin-top:12px">${I('target','ic gold')}<div style="flex:1"><b>Cosa vuoi migliorare del tuo corpo?</b><div class="small mu">2 domande e adatto esercizi e alimentazione</div></div>${I('chev')}</button>`:''}
  ${!S.dismissInstall?`<div class="card" style="margin-top:12px"><div class="row between"><b>${I('info','ic gold')} Mettila sul telefono</b><button class="chip" id="dism" style="padding:5px 9px">${I('x')}</button></div><div class="small mu" style="margin-top:6px">Funziona anche offline. <b>iPhone (Safari)</b>: tasto Condividi → "Aggiungi alla schermata Home". <b>Android (Chrome)</b>: menu ⋮ → "Aggiungi a schermata Home". Avrai l'icona Showtime Fit come un'app.</div></div>`:''}`;
  const main=steps.filter(s=>(s.type==='work'||s.type==='set')&&(s.phase==='main'||F.fixed));const seen=new Set();const uniq=main.filter(s=>!seen.has(s.ex.id)&&seen.add(s.ex.id));
@@ -1202,6 +1261,8 @@ function vHome(m){
  if($('#rt'))$('#rt').onclick=()=>testView($('#main'),false);
  if($('#repb'))$('#repb').onclick=()=>reportSheet(progWeek()===1?1:0);
  if($('#bqh'))$('#bqh').onclick=()=>bodyQuiz(render);
+ if($('#chsh'))$('#chsh').onclick=chShare;
+ if($('#weigh'))$('#weigh').onclick=measForm;
  if($('#dism'))$('#dism').onclick=()=>{S.dismissInstall=true;save();render()};
 }
 function exRow(e,sub,o={}){return `<div class="list-ex" role="button" tabindex="0" data-ex="${e.id}"><div class="th">${staticFig(e,e.id==='plank'||e.id==='wallsit'?0:1,o)}</div><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(e.n)}</div><div class="small mu">${esc(sub||'')}</div><div>${groupsOf(e).slice(0,2).map(x=>`<span class="tag g">${GRPN[x]}</span>`).join('')}</div></div><button class="star ${isFav(e.id)?'on':''}" data-fav="${e.id}" aria-label="Preferito">${I('star')}</button></div>`}
@@ -1296,7 +1357,7 @@ let PL=null,wakeLock=null;
 async function keepAwake(on){try{if(on&&navigator.wakeLock)wakeLock=await navigator.wakeLock.request('screen');else if(wakeLock){wakeLock.release();wakeLock=null}}catch(e){}}
 function startPlayer(steps,meta){
  unlockAudio();keepAwake(true);COACH.prime();
- const el=document.createElement('div');el.className='player';document.body.appendChild(el);
+ const el=document.createElement('div');el.className='player';el.style.zoom=S.fontK||1;document.body.appendChild(el);
  PL={layer:openLayer(playerBack),mass:{},steps,meta,i:0,rem:steps[0].secs,paused:false,last:performance.now(),el,start:Date.now(),lastBeep:-1,halfDone:false,worked:0};
  el.innerHTML=`<div class="row between"><button class="chip" id="px" aria-label="Chiudi">${I('x')}</button><span class="small mu" id="plab" style="flex:1;text-align:center"></span><div class="row" style="gap:6px"><button class="chip" id="pvoice" aria-label="Voce" style="padding:7px">${I(S.set.voice!==false?'vol':'voloff')}</button>${CAM_OK?`<button class="chip" id="pcam" aria-label="Fotocamera" style="padding:7px">${I('cam')}</button>`:''}<span class="small mu" id="pcount"></span></div></div>
  <div class="pbar" style="margin:10px 0"><i id="ppr"></i></div>
@@ -1390,7 +1451,7 @@ function finishPlayer(partial){
  <p class="small dim">1-3 facile · 4-6 giusto · 7-8 duro · 9-10 al limite</p>
  <button class="btn" id="fin" style="margin-top:14px">Salva</button></div>`;
  let rpe=0;el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{rpe=+b.dataset.r;el.querySelectorAll('[data-r]').forEach(x=>x.classList.toggle('on',x===b))});
- el.querySelector('#fin').onclick=()=>{const x0=xpTotal(),c0=coins(),l0=lvOf(x0).lv;S.wk.push({id:uid(),date:today(),focus:meta.focus,min,loc:S.loc,rpe,kind:meta.kind,partial:!!partial});save();const nm=checkMedals();closePlayer();
+ el.querySelector('#fin').onclick=()=>{const x0=xpTotal(),c0=coins(),l0=lvOf(x0).lv;S.wk.push({id:uid(),date:today(),focus:meta.focus,min,loc:S.loc,rpe,kind:meta.kind,partial:!!partial});save();const nm=checkMedals();const je=jollyEarn();closePlayer();if(je)setTimeout(()=>toast('7 giorni di fila: hai guadagnato un giorno jolly!'),3200);
   const l1=lvOf(xpTotal()).lv;setTimeout(()=>{if(l1>l0){S.seenLv=l1;save();sheet(`<div style="text-align:center;padding:10px 0"><div style="font-size:56px">🏆</div><div class="gold" style="font:700 22px 'Barlow Condensed',sans-serif">LIVELLO ${l1}</div><h1 style="margin:4px 0">${esc(rankOf(l1))}</h1><p class="mu">+${xpTotal()-x0} XP · +${coins()-c0} monete. Passa dallo Spogliatoio per sbloccare temi e magliette.</p><button class="btn" id="lvok">Grande!</button></div>`,(e3,c3)=>{e3.querySelector('#lvok').onclick=c3})}else toast('+'+(xpTotal()-x0)+' XP · +'+(coins()-c0)+' monete')},2700);
   if(rpe>=9)toast('Molto duro: la prossima volta scegli la versione più facile dove serve');else if(nm.length)toast('Nuova medaglia: '+nm.join(', '));else toast('Allenamento salvato')};
 }
@@ -1544,6 +1605,7 @@ function vProg(m){
  <div class="card">${lineChart(pts,cur[2])}${delta!=null?`<div class="small" style="color:${(cur[0]==='vita'||cur[0]==='fianchi'||cur[0]==='peso')?(delta<=0?'var(--ok)':'var(--gold2)'):(delta>=0?'var(--ok)':'var(--gold2)')}">${delta>0?'+':''}${delta} ${cur[2]} dalla prima misura</div>`:''}</div>
  <div class="grid2"><div class="stat"><span class="small mu">Record piegamenti</span><b>${rec}</b></div><div class="stat"><span class="small mu">Plank migliore</span><b>${mmss(pk)}</b></div><div class="stat"><span class="small mu">Allenamenti</span><b style="color:#fff">${tot}</b></div><div class="stat"><span class="small mu">Minuti totali</span><b style="color:#fff">${mins}</b></div></div>
  ${rewardsCard()}
+ ${chCard()}
  <button class="btn sec" id="rep" style="margin-bottom:6px">${I('medal')} Resoconto del ciclo</button>
  <h2>Programma 8 settimane</h2><div class="card"><div style="display:flex;gap:3px">${[1,2,3,4,5,6,7,8].map(w=>`<div style="flex:1;height:10px;border-radius:5px;background:${phaseOf(w).c};opacity:${w===progWeek()?1:0.35};${w===progWeek()?'outline:2px solid #fff':''}"></div>`).join('')}</div><div class="small" style="margin-top:8px"><b style="color:${phaseOf().c}">Settimana ${progWeek()} · ${phaseOf().n}</b> <span class="mu">${phaseOf().d}</span></div></div>
  <h2>Muscoli della settimana</h2><div class="card"><div class="small mu" style="margin-bottom:8px">Serie di Massa e tono · obiettivo 10-20 per muscolo</div>${muscleBars(weekSets())}</div>
@@ -1556,7 +1618,7 @@ function vProg(m){
  ${MEDALS.map(([id,n,d])=>`<div class="medal ${S.medals[id]?'got':''}"><div class="md">${I('medal')}</div><div><b>${esc(n)}</b><div class="small mu">${esc(d)}${S.medals[id]?' · '+fmt(S.medals[id]):''}</div></div></div>`).join('')}`;
  m.querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{PROGM=b.dataset.pm;render()});
  $('#rt').onclick=()=>testView($('#main'),false);
- $('#shop').onclick=shopSheet;
+ $('#shop').onclick=shopSheet;if($('#chsh'))$('#chsh').onclick=chShare;
  $('#rep').onclick=()=>reportSheet(progWeek()===1&&cycleInfo(1)?1:0);
 }
 
@@ -1614,21 +1676,32 @@ function settings(){
  <label>Livello</label><div class="seg" id="slv">${['Principiante','Intermedio','Avanzato'].map((n,i)=>`<button data-l="${i+1}" class="${S.level===i+1?'on':''}">${n}</button>`).join('')}</div>
  <label>Sport e lavoro</label><button class="btn sec" id="sprof">${esc(SP().n)} · ${esc(JB().n)}</button>
  <label>Luoghi e attrezzi</label><button class="btn sec" id="sloc">${I('pin')} I tuoi luoghi (${S.locs.length})</button>
+ <label>Dimensione del testo</label><div class="seg" id="sfk">${[[1,'Normale'],[1.12,'Grande'],[1.25,'Molto grande']].map(([k,n])=>`<button data-fk="${k}" class="${(S.fontK||1)===k?'on':''}">${n}</button>`).join('')}</div>
+ <button class="btn ghost" id="stour" style="margin-top:10px">${I('info')} Guida dell'app</button>
  <label>Avvisi del timer</label><div class="chips"><button class="chip ${S.set.sound?'on':''}" id="ss">Beep</button><button class="chip ${S.set.vib?'on':''}" id="sv">Vibrazione</button><button class="chip ${S.set.voice!==false?'on':''}" id="svo">Voce del coach</button></div>
  <div class="hint">La vibrazione funziona su Android; su iPhone il browser non la permette, resta il beep.</div>
  <label>Programma</label><div class="small mu">Settimana ${progWeek()} di 8 · ${phaseOf().n} (dal ${fmt(S.start)})</div><button class="btn ghost" id="srest" style="margin-top:6px">Ricomincia il programma dalla settimana 1</button>
  <label>Salvataggio</label><div class="small mu">${syncState==='cloud'?'Sul telefono e nel tuo spazio privato dell\'account Claude: ritrovi i dati anche su un altro dispositivo.':'Solo su questo telefono.'} Le foto restano solo sul telefono.</div>
- <div class="grid2" style="margin-top:8px"><button class="btn sec" id="bcopy">${I('copy')} Copia backup</button><button class="btn sec" id="bimp">Importa backup</button></div>
+ <div class="grid2" style="margin-top:8px"><button class="btn sec" id="bfile">Salva backup</button><button class="btn sec" id="bload">Ripristina</button></div>
+ <label class="row" style="gap:8px;margin-top:6px"><input type="checkbox" id="bph" style="width:auto"> Includi le foto (file più grande)</label>
+ <div class="grid2" style="margin-top:8px"><button class="btn ghost" id="bcopy">${I('copy')} Copia come testo</button><button class="btn ghost" id="bimp">Incolla testo</button></div><input type="file" id="bfin" accept=".json,application/json,text/plain" style="display:none">
  <div style="height:14px"></div><button class="btn" id="ssave">Salva</button>
  <button class="btn danger" id="sreset" style="margin-top:20px">Cancella tutti i dati</button>`,(el,close)=>{
   let lv=S.level,sx=S.sex||'m';el.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{sx=b.dataset.x;el.querySelectorAll('[data-x]').forEach(x=>x.classList.toggle('on',x===b))});
   el.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{S.set.vsex=b.dataset.v;COACH.v=null;COACH.pick();el.querySelectorAll('[data-v]').forEach(x=>x.classList.toggle('on',x===b));COACH.say(S.set.vsex==='f'?'Ciao, sono la tua coach!':'Ciao, sono il tuo coach!',true)});el.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{lv=+b.dataset.l;el.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('on',x===b))});
   el.querySelector('#ss').onclick=e=>{S.set.sound=!S.set.sound;e.currentTarget.classList.toggle('on',S.set.sound);if(S.set.sound)beep()};
+  el.querySelectorAll('[data-fk]').forEach(b=>b.onclick=()=>{S.fontK=+b.dataset.fk;save();applyFont();el.querySelectorAll('[data-fk]').forEach(x=>x.classList.toggle('on',x===b))});
+  el.querySelector('#stour').onclick=()=>{close();tour()};
   el.querySelector('#sloc').onclick=()=>{close();placesSheet()};
   el.querySelector('#sprof').onclick=()=>{close();const L=openLayer(()=>render());profileSetup($('#main'),false,ok=>{closeLayer(L);render();if(ok)toast('Profilo aggiornato')})};
   el.querySelector('#sv').onclick=e=>{S.set.vib=!S.set.vib;e.currentTarget.classList.toggle('on',S.set.vib);vib(100)};
   el.querySelector('#svo').onclick=e=>{S.set.voice=S.set.voice===false;e.currentTarget.classList.toggle('on',S.set.voice!==false);if(S.set.voice!==false)COACH.say('Ciao! Sono il tuo coach. Spingiamo!',true)};
   el.querySelector('#srest').onclick=()=>{S.start=today();save();toast('Programma ripartito dalla settimana 1')};
+  el.querySelector('#bfile').onclick=async()=>{const data={app:'showtimefit',v:1,date:today(),S};if(el.querySelector('#bph').checked)data.photos=await IDB.all();const blob=new Blob([JSON.stringify(data)],{type:'application/json'});const name='showtime-backup-'+today()+'.json';
+   try{const f=new File([blob],name,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Backup Showtime Fit'});return}}catch(e){if(e&&e.name==='AbortError')return}
+   if(CAM_OK){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>a.remove(),3000);toast('Backup salvato nei download')}else toast('Qui usa "Copia come testo"')};
+  el.querySelector('#bload').onclick=()=>el.querySelector('#bfin').click();
+  el.querySelector('#bfin').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const fr=new FileReader();fr.onload=async()=>{try{let o=JSON.parse(fr.result);const ph=o.photos;if(o.app==='showtimefit')o=o.S;if(!o||!o.name)throw 0;S={...DEF(),...o};migrateLocs();save();if(ph&&ph.length){for(const x of ph)await IDB.put(x)}close();render();toast('Backup ripristinato'+(ph&&ph.length?' con '+ph.length+' foto':''))}catch(e){toast('File di backup non valido')}};fr.readAsText(f)};
   el.querySelector('#bcopy').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(S));toast('Backup copiato: incollalo in una nota per conservarlo')}catch(e){toast('Copia non riuscita su questo browser')}};
   el.querySelector('#bimp').onclick=()=>{close();importSheet()};
   el.querySelector('#ssave').onclick=()=>{const n=el.querySelector('#sn').value.trim();if(n)S.name=n;S.level=lv;S.sex=sx;save();close();render();toast('Impostazioni salvate')};
