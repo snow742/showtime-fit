@@ -599,7 +599,7 @@ const KEY='showtimefit_v1';
 const DEF=()=>({v:1,kadj:0,kadjLog:[],readyLog:[],deloadUntil:null,boostUntil:null,lastLoadCheck:null,chDone:[],tourDone:false,fontK:1,jolly:0,jollyUsed:[],body:null,spent:0,owned:['th-oro','of-bianca'],eqp:{theme:'th-oro',outfit:'of-bianca'},seenLv:1,favs:[],plans:[],sex:'m',sport:'',job:'',name:'',pain:{},ready:null,prof:{},calTime:'18:30',level:0,start:today(),tests:[],loc:'',locs:null,set:{sound:true,vib:true},calW:{},calLog:[],wk:[],pauses:[],meas:[],medals:{},dismissInstall:false,upd:0,mass:{lv:{},kg:{},log:[]},prot:{f:1.8,days:{},custom:[]}});
 let S=DEF();
 try{const raw=localStorage.getItem(KEY);if(raw)S={...DEF(),...JSON.parse(raw)}}catch(e){}
-function migrateLocs(){['kadjLog','readyLog','chDone','jollyUsed'].forEach(k=>S[k]=S[k]||[]);S.kadj=S.kadj||0;S.jolly=S.jolly||0;S.fontK=S.fontK||1;if(S.name&&S.tourDone===undefined)S.tourDone=true;S.owned=S.owned||['th-oro','of-bianca'];S.eqp=S.eqp||{theme:'th-oro',outfit:'of-bianca'};S.spent=S.spent||0;S.seenLv=S.seenLv||1;S.favs=S.favs||[];S.plans=S.plans||[];S.pain=S.pain||{};S.prof=S.prof||{};if(S.prot&&!S.prot.goal)S.prot.goal='massa';if(S.name&&!S.sport){S.sport='calcio';S.job=S.job||'autista'}if(!S.locs&&S.name){S.locs=[{id:'giardini',n:'Giardini',ic:'home',eq:['tappetino','sedia','zaino','elastico']},{id:'saponara',n:'Saponara',ic:'home',eq:['tappetino','sedia','zaino','elastico','sbarra']},{id:'fuori',n:'Fuori casa',ic:'pin',eq:[]}]}if(S.locs&&S.locs.length&&!S.locs.some(l=>l.id===S.loc))S.loc=S.locs[0].id}
+function migrateLocs(){['kadjLog','readyLog','chDone','jollyUsed'].forEach(k=>S[k]=S[k]||[]);S.kadj=S.kadj||0;S.jolly=S.jolly||0;S.fontK=S.fontK||1;if(S.name&&S.tourDone===undefined)S.tourDone=true;S.owned=S.owned||['th-oro','of-bianca'];S.eqp=S.eqp||{theme:'th-oro',outfit:'of-bianca'};S.spent=S.spent||0;S.seenLv=S.seenLv||1;S.wplan=S.wplan||{};S.food=S.food||{meals:4,no:[],quick:true};S.shiftT=S.shiftT||{};S.favs=S.favs||[];S.plans=S.plans||[];S.pain=S.pain||{};S.prof=S.prof||{};if(S.prot&&!S.prot.goal)S.prot.goal='massa';if(S.name&&!S.sport){S.sport='calcio';S.job=S.job||'autista'}if(!S.locs&&S.name){S.locs=[{id:'giardini',n:'Giardini',ic:'home',eq:['tappetino','sedia','zaino','elastico']},{id:'saponara',n:'Saponara',ic:'home',eq:['tappetino','sedia','zaino','elastico','sbarra']},{id:'fuori',n:'Fuori casa',ic:'pin',eq:[]}]}if(S.locs&&S.locs.length&&!S.locs.some(l=>l.id===S.loc))S.loc=S.locs[0].id}
 migrateLocs();
 let dbRef=null,syncState='local',saveT=null,writing=false,pendingWrite=false;
 function save(){S.upd=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}clearTimeout(saveT);saveT=setTimeout(pushDb,1500)}
@@ -1024,7 +1024,7 @@ function planWeek(mon){
     const sp=SP();if(x==='A'){if(nx)sc-=sp.legs?3:0.5;if(pv)sc-=sp.legs?3:0.5;if(sp.legs&&isCalcio(addD(d,2)))sc-=0.3}
     if(x==='B'&&nx&&sp.upper)sc-=2.5;
     if(x==='C'&&nx)sc+=sp.upper?-1.5:2;if((x==='B'||x==='C')&&pv)sc+=0.5;sc-=0.15*days.indexOf(d)});
-   for(let i=1;i<k;i++)if(diffD(dset[i-1],dset[i])===1)sc-=2;
+   dset.forEach(d=>{if(postNight(d))sc-=4;if(shiftOf(d)==='N')sc-=0.4});for(let i=1;i<k;i++)if(diffD(dset[i-1],dset[i])===1)sc-=2;
    for(let i=1;i<k;i++)if(ass[i-1]<ass[i])sc+=0.5;
    if(sc>bs){bs=sc;best={dset,ass}}}}
  const res={};
@@ -1033,11 +1033,110 @@ function planWeek(mon){
   if(isCalcio(d)){res[d]={focus:'pre',why:'Oggi '+SP().w+': solo attivazione prima',calcio:true};return}
   const i=best?best.dset.indexOf(d):-1;
   if(i>=0){const x=best.ass[i];res[d]={focus:'sess'+x,why:isCalcio(addD(d,1))?'Domani '+SP().w+': sessione leggera per le parti che userai':'Programma della settimana'};return}
-  if(isCalcio(addD(d,-1)))res[d]={focus:'mobilita',why:'Ieri '+SP().w+': recupero e mobilità'};
+  if(postNight(d))res[d]={focus:'mobilita',why:'Dopo il turno di notte: recupero e mobilità'};
+  else if(isCalcio(addD(d,-1)))res[d]={focus:'mobilita',why:'Ieri '+SP().w+': recupero e mobilità'};
   else res[d]={focus:'mobilita',why:d<t?'Riposo':'Riposo attivo: mobilità leggera',rest:true};
  });
  return res;
 }
+
+/* ---------- PIANIFICA LA SETTIMANA ---------- */
+const SHIFTS={M:['Mattina','06:00','12:30'],P:['Pomeriggio','13:30','20:00'],S:['Sera','17:00','23:30'],N:['Notte','22:00','04:30'],G:['Giornata','09:00','17:00'],R:['Libero','','']};
+const SHORD=['R','M','P','S','N','G'];
+function shT(c){const o=(S.shiftT||{})[c];return o||[SHIFTS[c][1],SHIFTS[c][2]]}
+function shiftOf(d){const w=(S.wplan||{})[monday(d)];return w&&w.sh?w.sh[dIdx(d)]||null:null}
+function postNight(d){return shiftOf(addD(d,-1))==='N'}
+const hm=t=>{const [h,m]=String(t).split(':').map(Number);return h*60+(m||0)},mh=x=>String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');
+function blocksOf(d){const b=[];const c=shiftOf(d);if(c&&c!=='R'){const [a,e]=shT(c).map(hm);if(e>a)b.push([a-60,e+90]);else b.push([a-60,1440])}
+ const p=shiftOf(addD(d,-1));if(p&&p!=='R'){const [a,e]=shT(p).map(hm);if(e<a)b.push([0,Math.max(e+90,13*60)])}
+ if(isCalcio(d)){const st=sportTime(d);if(st){const x=hm(st);b.push([x-150,x+120])}}return b}
+function sportTime(d){const w=(S.wplan||{})[monday(d)];return w&&w.sportT||''}
+function suggestTime(d,L){const dur=Math.max(40,(SESS[L]&&SESS[L].min||35)+10);const bl=blocksOf(d);const c=shiftOf(d);
+ const eve=c==='M'||c==='G';const cand=(eve?['17:30','18:00','18:30','19:00','10:30','15:00','20:00']:['10:30','11:00','17:30','18:00','15:00','09:00','19:30','20:30']).map(hm);
+ for(const x of cand){if(!bl.some(([a,e])=>x<e&&x+dur>a))return mh(x)}return ''}
+function planTime(d){const w=(S.wplan||{})[monday(d)];if(!w)return '';const p=planWeek(monday(d))[d];if(!p||!p.focus.startsWith('sess'))return '';return (w.t&&w.t[d])||suggestTime(d,p.focus.slice(4))}
+const SNACKS=[['Yogurt greco e una manciata di frutta secca',['latticini']],['Panino con bresaola e una mela',['carne']],['Panino con fesa di tacchino',['carne']],['Barretta proteica e una banana',[]],['Grana a scaglie e cracker integrali',['latticini']],['Uova sode (preparale la sera prima)',['uova']],['Panino con tonno',['pesce']],['Frutta secca e un frutto',[]]];
+const QUICK=[['Uova strapazzate e pane integrale','5 min',['uova']],['Petto di pollo a fette in padella con insalata in busta','10 min',['carne']],['Legumi in scatola con riso già cotto','5 min',[]],['Hamburger di manzo e patate al microonde','12 min',['carne','rossa']],['Bresaola, rucola e grana','2 min',['carne','latticini']],['Tonno, fagioli e cipolla','3 min',['pesce']],['Salmone in padella e riso basmati','12 min',['pesce']],['Fiocchi di latte, pomodori e pane','2 min',['latticini']],['Pasta con ragù di tacchino già pronto','12 min',['carne']],['Omelette con prosciutto cotto','8 min',['uova','carne']]];
+function foodOk(tags){const no=(S.food&&S.food.no)||[];return !tags.some(t=>no.includes(t)||(t==='rossa'&&no.includes('rossa')))}
+function weekTips(mon){const w=(S.wplan||{})[mon]||{sh:[]};const sh=w.sh||[];const pw=planWeek(mon);const days=[...Array(7)].map((_,i)=>addD(mon,i));const out=[];
+ const nSport=days.filter(isCalcio).length,nSess=days.filter(d=>pw[d]&&pw[d].focus.startsWith('sess')).length;
+ const has=c=>sh.includes(c);const meals=(S.food&&S.food.meals)||4;const pt=protTarget();
+ const snack=SNACKS.filter(x=>foodOk(x[1])).slice(0,3).map(x=>x[0].toLowerCase());
+ const quick=QUICK.filter(x=>foodOk(x[2])).slice(0,4);
+ if(pt)out.push(['target','Proteine: '+pt+' g al giorno',meals+' pasti: circa '+Math.round(pt/meals/5)*5+' g di proteine a pasto. Così ci arrivi senza fatica.']);
+ if(S.food&&S.food.quick&&quick.length)out.push(['clock','Piatti veloci della settimana',quick.map(q=>q[0]+' ('+q[1]+')').join(' · ')]);
+ if(sh.some(c=>c&&c!=='R')&&snack.length)out.push([JB().k==='autista'?'wheel':'clock','Spuntino per il turno','Tienilo '+(JB().k==='autista'?'in macchina':'con te')+': '+snack.join(', ')+'.']);
+ if(has('M'))out.push(['flame','Turni di mattina','Colazione prima di uscire, anche piccola: allenarsi la sera a stomaco vuoto da pranzo rende meno.']);
+ if(has('N'))out.push(['clock','Turni di notte','Il giorno dopo la notte niente allenamento: dormi, mangia e recupera. Ho già spostato le sessioni.']);
+ if(has('S')||has('N'))out.push(['clock','Sonno','Dopo il turno serale niente schermi nell\'ultima mezz\'ora: 7-8 ore di sonno fanno crescere i muscoli più di una serie in più.']);
+ if(nSport)out.push(['ball','Giorni di '+SP().w,'Pasto con carboidrati (pasta, riso, pane) circa 3 ore prima. Dopo: acqua, un pizzico di sale e un pasto con proteine.']);
+ if(nSess)out.push(['bolt','Dopo le sessioni','Entro 2-3 ore fai un pasto con proteine e carboidrati: '+(quick[0]?quick[0][0].toLowerCase():'quello che preferisci')+' va benissimo.']);
+ const bw=bodyW();out.push(['info','Acqua',(bw?'Circa '+String(Math.round(bw*0.035*10)/10).replace('.',',')+' litri al giorno, ':'Almeno 2 litri al giorno, ')+'di più nei giorni di sport e d\'estate.']);
+ if(phaseOf().n&&/scarico/i.test(phaseOf().n))out.push(['info','Settimana di scarico','Meno serie, stessa tecnica. Non è tempo perso: è qui che recuperi e cresci.']);
+ return out}
+function planWizard(mon0){S.wplan=S.wplan||{};S.food=S.food||{meals:4,no:[],quick:true};S.shiftT=S.shiftT||{};let mon=mon0||monday(today());let step=0;
+ const prev=S.wplan[addD(mon,-7)];
+ let W=JSON.parse(JSON.stringify(S.wplan[mon]||{sh:prev&&prev.sh?prev.sh.slice():Array(7).fill('R'),t:{},sportT:prev&&prev.sportT||'21:00'}));
+ let sport=(S.calW[mon]||[]).slice();
+ const steps=SP().none?['work','plan','tips']:['work','sport','plan','tips'];
+ const days=[...Array(7)].map((_,i)=>addD(mon,i));
+ const commit=()=>{W.sh=W.sh.map(c=>c||'R');S.wplan[mon]=W;if(!SP().none)S.calW[mon]=sport.slice().sort();save()};
+ sheet(`<div id="wz"></div>`,(el,close)=>{
+  const draw=()=>{const k=steps[step];const head=`<div class="small gold">Pianifica la settimana · ${step+1} di ${steps.length}</div><div class="small dim" style="margin-bottom:2px">${fmt(mon)} – ${fmt(days[6])}</div>`;
+   let h='';
+   if(k==='work'){h=`<h2 style="margin:2px 0 4px">Il tuo lavoro</h2><p class="small mu" style="margin:0 0 8px">Tocca ogni giorno per cambiare il turno.</p>
+    ${days.map((d,i)=>{const c=W.sh[i]||'R';const [a,b]=shT(c);return `<button class="dayrow" data-sh="${i}" style="width:100%;border:0;text-align:left;color:var(--tx);margin-bottom:6px"><div class="dname"><span class="small dim">${GG[i]}</span><b>${pd(d).getDate()}</b></div><div style="flex:1;min-width:0"><b class="${c==='R'?'dim':''}">${SHIFTS[c][0]}</b><div class="small dim">${c==='R'?'Niente lavoro':a+' – '+b}</div></div><span class="chip" style="pointer-events:none;padding:5px 9px">${I('refresh')}</span></button>`}).join('')}
+    ${prev&&prev.sh?`<button class="chip" id="wcp" style="margin:2px 0 8px">${I('copy')} Come la settimana scorsa</button>`:''}
+    <button class="sect" id="wst" style="margin-top:4px"><span>Orari dei turni</span>${I('down')}</button><div id="wsto" style="display:none">${SHORD.filter(c=>c!=='R').map(c=>{const [a,b]=shT(c);return `<div class="grid2" style="align-items:end;margin-bottom:6px"><div><label>${SHIFTS[c][0]} dalle</label><input type="time" data-ta="${c}" value="${a}"></div><div><label>alle</label><input type="time" data-tb="${c}" value="${b}"></div></div>`}).join('')}</div>`}
+   if(k==='sport'){h=`<h2 style="margin:2px 0 4px">Quando fai ${esc(SP().w)}?</h2><p class="small mu" style="margin:0 0 8px">Gare e allenamenti. In quei giorni niente sessione pesante.</p>
+    <div class="chips" style="margin-bottom:10px">${days.map((d,i)=>`<button class="chip ${sport.includes(i)?'on':''}" data-sp="${i}" style="min-width:52px;justify-content:center;flex-direction:column;gap:0"><span>${GG[i]}</span><b>${pd(d).getDate()}</b></button>`).join('')}</div>
+    <label>Di solito a che ora?</label><input type="time" id="wspt" value="${esc(W.sportT||'')}">`}
+   if(k==='plan'){commit();const pw=planWeek(mon);h=`<h2 style="margin:2px 0 4px">Il piano</h2><p class="small mu" style="margin:0 0 8px">Ti propongo l'orario migliore tra un turno e l'altro. Puoi cambiarlo.</p>
+    ${days.map((d,i)=>{const p=pw[d];const c=W.sh[i]||'R';const sess=p.focus.startsWith('sess')&&!p.done;const L=p.focus.slice(4);const sp=isCalcio(d);
+     const what=sp?`<span class="gold">${I('ball','ic')} ${esc(SP().n)}${W.sportT?' · '+W.sportT:''}</span>`:sess?`<span style="background:var(--gold);color:#2A1A47;border-radius:6px;padding:0 6px;margin-right:4px">${L}</span>${esc(SESS[L].n)}`:p.done?'<span style="color:var(--ok)">Fatta ✓</span>':p.rest?'<span class="dim">Riposo</span>':esc(FOCUS[p.focus].n);
+     const why=postNight(d)?'Dopo la notte: recupero':c!=='R'?SHIFTS[c][0]+' '+shT(c).join('–'):'Giorno libero';
+     return `<div class="dayrow" style="margin-bottom:6px"><div class="dname"><span class="small dim">${GG[i]}</span><b>${pd(d).getDate()}</b></div><div style="flex:1;min-width:0"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${what}</div><div class="small dim">${esc(why)}</div></div>${sess&&d>=today()?`<input type="time" data-tm="${d}" value="${esc((W.t&&W.t[d])||suggestTime(d,L))}" style="width:112px;padding:6px">`:''}</div>`}).join('')}`}
+   if(k==='tips'){const F2=S.food;h=`<h2 style="margin:2px 0 4px">Consigli della settimana</h2>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="small mu">Pasti</span>${[3,4,5].map(n=>`<button class="chip ${F2.meals===n?'on':''}" data-ml="${n}" style="padding:5px 10px">${n}</button>`).join('')}<button class="chip ${F2.quick?'on':''}" id="wq" style="padding:5px 10px">${I('clock')} Veloci</button></div>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:10px"><span class="small mu">Niente</span>${[['pesce','Pesce'],['latticini','Latticini'],['rossa','Carne rossa'],['carne','Carne'],['uova','Uova']].map(([k2,n])=>`<button class="chip ${F2.no.includes(k2)?'on':''}" data-no="${k2}" style="padding:5px 10px">${n}</button>`).join('')}</div>
+    ${weekTips(mon).map(([ic,t,dsc])=>`<div class="card" style="padding:10px 12px;margin-bottom:7px"><b class="gold row" style="gap:6px">${I(ic,'ic')} ${esc(t)}</b><div class="small" style="color:#D9CCEF;margin-top:3px">${esc(dsc)}</div></div>`).join('')}
+    <div class="card" style="padding:10px 12px;border:1px solid #4A3670"><b class="row" style="gap:6px">${I('info','ic')} Integratori: solo quelli utili</b><div class="small" style="color:#D9CCEF;margin-top:3px">Creatina 3-5 g al giorno è il più studiato. Proteine in polvere solo se col cibo non arrivi. Vitamina D solo se un esame dice che ti manca. Il resto quasi sempre non serve: in dubbio chiedi al medico.</div></div>`}
+   const last=step===steps.length-1;
+   el.querySelector('#wz').innerHTML=head+h+`<div class="grid2" style="margin-top:12px">${step?`<button class="btn sec" id="wb">${I('chevl')} Indietro</button>`:`<button class="btn sec" id="wx">Annulla</button>`}${last?`<button class="btn" id="wok">${I('check')} Salva</button>`:`<button class="btn" id="wn">Avanti ${I('chev')}</button>`}</div>${last?`<button class="btn sec" id="wcal" style="margin-top:8px">${I('cal')} Salva e metti nel calendario</button>`:''}`;
+   const q=s2=>el.querySelector(s2),qa=s2=>el.querySelectorAll(s2);
+   qa('[data-sh]').forEach(b=>b.onclick=()=>{const i=+b.dataset.sh;const c=W.sh[i]||'R';W.sh[i]=SHORD[(SHORD.indexOf(c)+1)%SHORD.length];draw()});
+   if(q('#wcp'))q('#wcp').onclick=()=>{W.sh=prev.sh.slice();draw()};
+   if(q('#wst'))q('#wst').onclick=()=>{const o=q('#wsto');o.style.display=o.style.display==='none'?'block':'none'};
+   qa('[data-ta],[data-tb]').forEach(inp=>inp.onchange=()=>{const c=inp.dataset.ta||inp.dataset.tb;const cur=shT(c).slice();if(inp.dataset.ta)cur[0]=inp.value;else cur[1]=inp.value;S.shiftT[c]=cur;save()});
+   qa('[data-sp]').forEach(b=>b.onclick=()=>{const i=+b.dataset.sp;sport=sport.includes(i)?sport.filter(x=>x!==i):[...sport,i];draw()});
+   if(q('#wspt'))q('#wspt').onchange=e=>{W.sportT=e.target.value};
+   qa('[data-tm]').forEach(inp=>inp.onchange=()=>{W.t=W.t||{};W.t[inp.dataset.tm]=inp.value;commit()});
+   qa('[data-ml]').forEach(b=>b.onclick=()=>{S.food.meals=+b.dataset.ml;save();draw()});
+   if(q('#wq'))q('#wq').onclick=()=>{S.food.quick=!S.food.quick;save();draw()};
+   qa('[data-no]').forEach(b=>b.onclick=()=>{const k2=b.dataset.no;S.food.no=S.food.no.includes(k2)?S.food.no.filter(x=>x!==k2):[...S.food.no,k2];save();draw()});
+   if(q('#wb'))q('#wb').onclick=()=>{step--;draw();el.scrollTop=0};
+   if(q('#wx'))q('#wx').onclick=close;
+   if(q('#wn'))q('#wn').onclick=()=>{if(steps[step]==='sport'){const v=q('#wspt').value;W.sportT=v}commit();step++;draw();el.scrollTop=0};
+   const fin=()=>{commit();homeFocus=null;close();render()};
+   if(q('#wok'))q('#wok').onclick=()=>{fin();toast('Settimana pianificata')};
+   if(q('#wcal'))q('#wcal').onclick=()=>{fin();icsWeek(mon)};
+  };draw()});
+}
+function icsWeek(mon){const pw=planWeek(mon);const ev=[];const two=n=>String(n).padStart(2,'0');const nowM=new Date().getHours()*60+new Date().getMinutes();
+ Object.entries(pw).forEach(([d,v])=>{if(d<today()||v.done)return;
+  if(v.focus.startsWith('sess')){const L=v.focus.slice(4);const t=planTime(d)||S.calTime||'18:30';if(d===today()&&hm(t)<=nowM)return;ev.push({d,t,min:SESS[L].min+10,s:'Showtime Fit · Sessione '+L+' · '+SESS[L].n,al:'Allenamento tra 15 minuti'})}
+  else if(isCalcio(d)&&sportTime(d)){const t=sportTime(d);if(d===today()&&hm(t)<=nowM)return;ev.push({d,t:mh(Math.max(0,hm(t)-30)),min:15,s:'Showtime Fit · Attivazione prima di '+SP().w,al:'Fai l\'attivazione prima di '+SP().w}) }});
+ if(!ev.length){toast('Niente da mettere in calendario');return}
+ if(!CAM_OK){sheet(`<h2 style="margin-top:0">Promemoria</h2><p class="small mu">In questa versione il telefono non permette di scaricare file. Usa la versione GitHub dell'app, oppure segna questi orari:</p>${ev.map(e=>`<div class="mrow"><span>${GGL[dIdx(e.d)]} ${fmt(e.d)}</span><b>${e.t} · ${esc(e.s.replace('Showtime Fit · ',''))}</b></div>`).join('')}`);return}
+ const stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+ const dt=(d,t,add)=>{const x=pd(d);const m=hm(t)+add;x.setHours(0,m,0,0);return x.getFullYear()+two(x.getMonth()+1)+two(x.getDate())+'T'+two(x.getHours())+two(x.getMinutes())+'00'};
+ let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Showtime Fit//IT\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\n';
+ ev.forEach((e,i)=>{ics+=`BEGIN:VEVENT\r\nUID:stf-${e.d}-${i}@showtimefit\r\nDTSTAMP:${stamp}\r\nDTSTART:${dt(e.d,e.t,0)}\r\nDTEND:${dt(e.d,e.t,e.min)}\r\nSUMMARY:${e.s}\r\nDESCRIPTION:Apri Showtime Fit e tocca Inizia.\r\nBEGIN:VALARM\r\nTRIGGER:-PT15M\r\nACTION:DISPLAY\r\nDESCRIPTION:${e.al}\r\nEND:VALARM\r\nEND:VEVENT\r\n`});
+ ics+='END:VCALENDAR\r\n';
+ try{const blob=new Blob([ics],{type:'text/calendar'});const f=new File([blob],'showtime-fit-settimana.ics',{type:'text/calendar'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})&&/Android/i.test(navigator.userAgent)){navigator.share({files:[f],title:'Showtime Fit'}).catch(()=>{})}
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='showtime-fit-settimana.ics';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
+  toast(ev.length+' promemoria pronti per il calendario')}catch(e){toast('Non riesco a creare il file del calendario')}}
 
 /* ---------- sfide ---------- */
 const CHALLENGES=[
@@ -1248,10 +1347,10 @@ function vHome(m){
  m.innerHTML=`<div class="row between"><span class="mu">${GGL[dIdx(d)]} ${fmt(d)}</span><div class="row"><span class="gold row" style="gap:4px">${I('flame')} ${st} ${st===1?'giorno':'giorni'}</span><button class="chip" id="set" aria-label="Impostazioni" style="padding:7px">${I('set')}</button></div></div>
  <h1 style="margin-top:8px">Ciao ${esc(S.name)}, ${G('pronto','pronta')} a muoverti?</h1>
  <div class="chips" style="margin-bottom:12px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px">${S.locs.map(l=>`<button class="chip ${S.loc===l.id?'on':''}" data-loc="${l.id}" style="flex:none">${I(l.ic||'home')} ${esc(l.n)}</button>`).join('')}<button class="chip" id="plm" style="flex:none" aria-label="Gestisci luoghi">${I('plus')} Luoghi</button></div>
- ${!wkSet&&!SP().none?`<button class="card row" id="setw" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('ball','ic gold')}<div style="flex:1"><b>Quando fai ${esc(SP().w)} questa settimana?</b><div class="small mu">Segna i giorni e il piano si sistema da solo</div></div>${I('chev')}</button>`:''}
+ ${(()=>{const mon=monday(d),nx=addD(mon,7);const WP=S.wplan||{};const tgt=!WP[mon]?mon:(dIdx(d)>=5&&!WP[nx]?nx:null);if(!tgt)return '';return `<button class="card row" id="setw" data-mon="${tgt}" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('cal','ic gold')}<div style="flex:1"><b>Pianifica ${tgt===mon?'la settimana':'la prossima settimana'}</b><div class="small mu">Lavoro${SP().none?'':', '+esc(SP().w)}, allenamenti con orario e consigli</div></div>${I('chev')}</button>`})()}
  ${(S.deloadUntil&&today()<=S.deloadUntil)?`<div class="note bad">${I('info','ic')} Settimana leggera fino al ${fmt(S.deloadUntil)}: meno serie, recuperi meglio.</div>`:boostOn()?`<div class="note okk">${I('bolt','ic')} Acceleratore attivo fino al ${fmt(S.boostUntil)}: sali di livello prima.</div>`:''}
  <div class="hero">
-  <div class="small" style="color:var(--gold)">Settimana ${progWeek()} di 8 · ${ph.n} · ${esc(pl.done&&!homeFocus?'già fatta oggi':pl.why)}</div>
+  <div class="small" style="color:var(--gold)">Settimana ${progWeek()} di 8 · ${ph.n} · ${esc(pl.done&&!homeFocus?'già fatta oggi':pl.why)}${!homeFocus&&planTime(d)?' · alle '+planTime(d):''}</div>
   <div style="font:700 26px 'Barlow Condensed',sans-serif;margin:4px 0">${esc(F.n)}</div>
   <div class="small" style="color:#D9CCEF">${F.sess?esc(ph.d)+(noLegsToday()?' · niente gambe pesanti ('+SP().w+' vicino)':''):F.mass?'Serie da 8-15 fino quasi al limite · recupero 75″'+(noLegsToday()?' · niente gambe ('+SP().w+' vicino)':''):F.fixed?'Mobilità e attivazione per arrivare '+G('pronto','pronta')+' allo sport':nEx+' esercizi · '+LOCS[S.loc].n+' ('+LOCS[S.loc].d+')'}${doneToday?' · fatto oggi '+'✓':''}</div>
   <div class="chips" style="margin:12px 0 4px;gap:6px">${[10,20,30,45,60].map(x=>`<button class="chip wh ${homeDur===x?'on':''}" data-dur="${x}" style="padding:8px 11px;background:${homeDur===x?'#fff':'transparent'};border:1px solid ${F.mass&&recDur()===x?'#FDB927':'#8A6BBE'};color:${homeDur===x?'var(--pur)':'#fff'}">${x}′</button>`).join('')}</div>
@@ -1291,7 +1390,7 @@ function vHome(m){
  $('#pausa').onclick=()=>startPlayer(buildPausa(),{kind:'pausa'});
  if($('#calcio'))$('#calcio').onclick=()=>calcioForm();
  $('#set').onclick=settings;
- if($('#setw'))$('#setw').onclick=()=>{WEEKOFF=0;goTab('week')};
+ if($('#setw'))$('#setw').onclick=()=>planWizard($('#setw').dataset.mon);
  if($('#rt'))$('#rt').onclick=()=>testView($('#main'),false);
  if($('#repb'))$('#repb').onclick=()=>reportSheet(progWeek()===1?1:0);
  if($('#bqh'))$('#bqh').onclick=()=>bodyQuiz(render);
@@ -1499,11 +1598,12 @@ function vWeek(m){
  m.innerHTML=`<h1>La tua settimana</h1>
  <div class="row between card"><button class="chip" id="wp" aria-label="Settimana prima">${I('chevl')}</button><div style="text-align:center"><b>${fmt(mon)} – ${fmt(days[6])}</b><div class="small dim">${WEEKOFF===0?'Questa settimana':WEEKOFF===1?'Prossima settimana':WEEKOFF===-1?'Settimana scorsa':''}</div></div><button class="chip" id="wn" aria-label="Settimana dopo">${I('chev')}</button></div>
  <div class="card small" style="padding:10px 12px"><b class="gold">Settimana ${progWeek()} di 8 · ${phaseOf().n}</b><div class="mu">${phaseOf().d}</div></div>
+ <button class="btn" id="wplan" style="margin-bottom:10px">${I('cal')} ${(S.wplan||{})[mon]?'Modifica il piano della settimana':'Pianifica la settimana'}</button>
  <p class="small mu" style="${SP().none?'display:none':''}">Tocca il pallone nei giorni in cui fai ${esc(SP().w)} (gara o allenamento). Le sessioni A, B e C si spostano da sole.</p>
  ${days.map((d,i)=>{const pl=planFor(d);const on=set.includes(i);const done=S.wk.filter(w=>w.date===d);const cl=S.calLog.find(c=>c.date===d);
   const P2=planWeek(mon)[d];
   return `<div class="dayrow ${d===today()?'today':''}"><div class="dname"><span class="small dim">${GG[i]}</span><b>${pd(d).getDate()}</b></div>
-  <div style="flex:1;min-width:0"><div style="font-weight:600">${on||cl?'<span class="gold">'+esc(SP().n)+'</span>'+(cl?' · '+cl.tipo+' '+cl.min+'′':''):(P2.focus.startsWith('sess')?'<span style="background:var(--gold);color:#2A1A47;border-radius:6px;padding:0 6px;margin-right:6px">'+P2.focus.slice(4)+'</span>'+esc(SESS[P2.focus.slice(4)].n):(P2.rest?'<span class="dim">Riposo</span>':esc(FOCUS[P2.focus].n)))}</div><div class="small dim">${on||cl?'Prima: '+FOCUS.pre.n.toLowerCase():esc(P2.done?'Fatta ✓':P2.why)}</div>${done.length?`<div class="small" style="color:var(--ok)">${I('check','ic')} ${done.map(w=>w.min+' min').join(' + ')}</div>`:''}</div>
+  <div style="flex:1;min-width:0"><div style="font-weight:600">${on||cl?'<span class="gold">'+esc(SP().n)+'</span>'+(cl?' · '+cl.tipo+' '+cl.min+'′':''):(P2.focus.startsWith('sess')?'<span style="background:var(--gold);color:#2A1A47;border-radius:6px;padding:0 6px;margin-right:6px">'+P2.focus.slice(4)+'</span>'+esc(SESS[P2.focus.slice(4)].n):(P2.rest?'<span class="dim">Riposo</span>':esc(FOCUS[P2.focus].n)))}</div><div class="small dim">${on||cl?'Prima: '+FOCUS.pre.n.toLowerCase()+(sportTime(d)?' · '+sportTime(d):''):esc(P2.done?'Fatta ✓':P2.why)}${!P2.done&&planTime(d)?' · <span class="gold">alle '+planTime(d)+'</span>':''}${shiftOf(d)&&shiftOf(d)!=='R'?' · '+SHIFTS[shiftOf(d)][0].toLowerCase():''}</div>${done.length?`<div class="small" style="color:var(--ok)">${I('check','ic')} ${done.map(w=>w.min+' min').join(' + ')}</div>`:''}</div>
   ${SP().none?'':`<button class="ball ${on?'on':''}" data-d="${i}" aria-label="Giorno di sport">${I('ball')}</button>`}</div>`}).join('')}
  <button class="btn sec" id="ics" style="margin-top:4px">${I('cal')} Metti le sessioni nel calendario</button>
  ${SP().none?'<!--':''}<div class="row between"><h2>Diario ${esc(SP().w)}</h2><button class="chip on" id="addc">${I('plus')} Aggiungi</button></div>
@@ -1511,7 +1611,8 @@ function vWeek(m){
  $('#wp').onclick=()=>{WEEKOFF--;render()};$('#wn').onclick=()=>{WEEKOFF++;render()};
  m.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const i=+b.dataset.d;const a=new Set(S.calW[mon]||[]);a.has(i)?a.delete(i):a.add(i);S.calW[mon]=[...a].sort();save();homeFocus=null;render()});
  if($('#addc'))$('#addc').onclick=()=>calcioForm();
- $('#ics').onclick=()=>icsSheet(mon);
+ $('#ics').onclick=()=>(S.wplan||{})[mon]?icsWeek(mon):icsSheet(mon);
+ $('#wplan').onclick=()=>planWizard(mon);
  m.querySelectorAll('[data-delc]').forEach(b=>b.onclick=()=>confirmBox('Eliminare questa sessione?','Elimina',()=>{S.calLog=S.calLog.filter(c=>c.id!==b.dataset.delc);save();render()}));
 }
 function icsSheet(mon){
