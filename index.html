@@ -32,12 +32,12 @@ h3{font:600 17px Barlow,sans-serif;margin:0 0 4px}
 .card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px}
 .hero{background:var(--pur);border-radius:18px;padding:16px;margin-bottom:12px}
 .row{display:flex;align-items:center;gap:10px}.between{justify-content:space-between}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.grid2>*{min-width:0}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{background:var(--card2);color:var(--mu);border:0;border-radius:20px;padding:8px 13px;font:500 14px Barlow,sans-serif;display:inline-flex;align-items:center;gap:6px}
 .chip.on{background:var(--gold);color:#2A1A47}
 .chip.wh.on{background:#fff;color:var(--pur)}
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:14px;padding:14px;font:700 18px 'Barlow Condensed',sans-serif;letter-spacing:.5px;background:var(--gold);color:#2A1A47}
+.btn{min-width:0;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:14px;padding:14px;font:700 18px 'Barlow Condensed',sans-serif;letter-spacing:.5px;background:var(--gold);color:#2A1A47}
 .btn.sec{background:var(--card2);color:var(--tx);font:600 16px Barlow,sans-serif}
 .btn.ghost{background:none;border:1px solid var(--line);color:var(--tx);font:600 15px Barlow,sans-serif}
 .btn.danger{background:#5A1A2A;color:#FFD6D6;font:600 15px Barlow,sans-serif}
@@ -87,6 +87,11 @@ label{font-size:13px;color:var(--mu);display:block;margin:10px 0 4px}
 .mrow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
 .mrow:last-child{border:0}
 #mlines line{display:none}
+.qrow{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 12px;padding:0 16px 2px;scrollbar-width:none}.qrow::-webkit-scrollbar{display:none}
+.qcard{flex:0 0 132px;background:var(--card);border:0;border-radius:14px;padding:10px;color:var(--tx);text-align:left;display:flex;flex-direction:column;gap:3px;font:inherit}.qcard b{font-weight:600;font-size:14px}.qcard span{font-size:12px;color:var(--dim);line-height:1.3}
+.todo{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-bottom:1px solid var(--line);color:var(--tx);padding:11px 0;text-align:left;font:inherit;font-size:14px}.todo:last-child{border:0}
+.sect{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;color:var(--tx);font:700 19px 'Barlow Condensed',sans-serif;padding:8px 0;margin-top:4px;text-align:left}
+.note{border-radius:12px;padding:9px 12px;margin-bottom:10px;font-size:13px;display:flex;gap:8px;align-items:center}.note.bad{background:#3A1020;color:#F7C1C1}.note.okk{background:#1D3410;color:#CFE8A9}
 .mcard{background:var(--card);border:0;border-radius:12px;padding:10px 12px;text-align:left;color:var(--tx);display:flex;flex-direction:column;gap:2px;min-width:0;font:inherit}.mcard b{font:700 22px/1.1 'Barlow Condensed',sans-serif;white-space:nowrap}.mcard.sel{outline:2px solid var(--gold)}.mcard .dl{font-size:12px}
 .photos{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.photos img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px;display:block}
 .logo{display:flex;align-items:center;gap:12px}.logo svg{width:52px;height:52px;border-radius:12px}
@@ -532,7 +537,34 @@ const EX=[
  B:{h:[54,60],t:-20,a1:{ang:[-22,-22]},a2:{ang:[-18,-18]},l1:{ik:[62,96],b:[1,0]},l2:{ik:[58,96],b:[1,0]}},
  cueA:'Braccia giù, pollici in su',cueB:'Alza le braccia a Y in linea col busto',
  steps:['Busto inclinato in avanti a schiena dritta, ginocchia morbide','Braccia giù, pollici rivolti verso l\'alto (puoi tenere due bottigliette da 0,5 L o l\'elastico sotto i piedi)','Alza le braccia in avanti e un po\' aperte, a formare una Y, fino alla linea del busto','Scendi lento'],
- ok:['Scapole giù e indietro','Collo lungo, sguardo a terra'],err:['Alzare le spalle verso le orecchie','Inarcare la schiena per salire'],easy:'Senza pesi',hard:'Bottigliette più pesanti o elastico più duro'}
+ ok:['Scapole giù e indietro','Collo lungo, sguardo a terra'],err:['Alzare le spalle verso le orecchie','Inarcare la schiena per salire'],easy:'Senza pesi',hard:'Bottigliette più pesanti o elastico più duro'},
+{id:'copenhagen',n:'Copenhagen (adduttori)',cat:'prevenzione',side:true,req:['sedia'],lv:[1,3],mode:'time',base:[15,20,30],tempo:4,m:{p:['legs'],s:['core']},props:'chairP',
+ A:{h:[60.1,80.5],t:-12.6,a1:{ang:[90,0]},a2:{ang:[92,2]},l1:{ik:[27,62],b:[0,-1],f:100},l2:{ang:[150,120],f:120}},
+ B:{h:[60.1,77.5],t:-14.5,a1:{ang:[90,0]},a2:{ang:[92,2]},l1:{ik:[27,62],b:[0,-1],f:100},l2:{ang:[170,175],f:170}},
+ cueA:'Fianco su, gamba sopra sulla sedia',cueB:'Porta su la gamba sotto verso la sedia',
+ steps:['Vista di fronte: sdraiati sul fianco, avambraccio a terra sotto la spalla','Appoggia il ginocchio o la caviglia della gamba di sopra sulla sedia','Alza il bacino: corpo in linea come un plank laterale','Porta su anche la gamba di sotto verso la sedia e tieni'],
+ ok:['Corpo in linea, bacino alto','Respiro regolare'],err:['Bacino che cade','Collo storto'],easy:'Ginocchio sulla sedia invece della caviglia',hard:'Caviglia sulla sedia e gamba sotto sollevata'},
+{id:'facepull',n:'Face pull con elastico',cat:'prevenzione',req:['elastico'],lv:[1,3],mode:'reps',base:[12,15,15],tempo:3,m:{p:['del','back'],s:['arms']},props:'doorR',band:[113,18],
+ A:{...ST,a1:{ang:[-12,-12]},a2:{ang:[-15,-15]}},B:{...ST,a1:{ang:[175,-70]},a2:{ang:[172,-74]}},
+ cueA:'Braccia avanti, elastico teso',cueB:'Tira verso la fronte, gomiti alti e aperti',
+ steps:['Elastico fissato in alto alla porta, all\'altezza della testa','Tira le mani verso la fronte con i gomiti alti','In fondo ruota le mani all\'indietro, come a mostrare i bicipiti','Torna avanti lento'],
+ ok:['Gomiti all\'altezza delle spalle','Scapole strette dietro'],err:['Tirare col collo','Inarcare la schiena'],easy:'Elastico più leggero',hard:'Pausa di 2 secondi dietro'},
+{id:'kneewall',n:'Mobilità caviglia al muro',cat:'mobilita',side:true,req:[],lv:[1,3],mode:'time',base:[30,40,40],tempo:4,m:{p:['calf'],s:[]},props:'wallR',
+ A:{h:[66,60],t:-88,a1:{ik:[98,40],b:[0,1]},a2:{ik:[98,44],b:[0,1]},l1:{ik:[86,96],b:[1,0]},l2:{ik:[56,96],b:[1,0],f:20}},
+ B:{h:[72,64],t:-82,a1:{ik:[98,40],b:[0,1]},a2:{ik:[98,44],b:[0,1]},l1:{ik:[86,96],b:[1,0]},l2:{ik:[56,96],b:[1,0],f:30}},
+ cueA:'Tallone davanti sempre a terra',cueB:'Porta il ginocchio verso il muro',
+ steps:['Piede davanti a una spanna dal muro','Porta il ginocchio in avanti verso il muro senza alzare il tallone','Torna indietro e ripeti','Se tocchi facilmente, allontana un po\' il piede'],
+ ok:['Tallone giù','Ginocchio in linea con il secondo dito'],err:['Tallone che si alza','Ginocchio che va verso l\'interno'],easy:'Piede più vicino al muro',hard:'Piede più lontano'},
+{id:'pogo',n:'Saltelli sulle punte (pogo)',cat:'calcio',req:[],lv:[1,3],mode:'time',base:[20,25,30],tempo:0.6,m:{p:['calf'],s:['quad']},
+ A:{...ST,h:[60,57],l1:{ik:[62,96],b:[1,0],f:40},l2:{ik:[58,96],b:[1,0],f:40},a1:{ang:[110,70]},a2:{ang:[70,40]}},B:{...ST,h:[60,52],l1:{ang:[91,92],f:60},l2:{ang:[89,90],f:60},a1:{ang:[110,70]},a2:{ang:[70,40]}},
+ cueA:'Rimbalza sulle punte',cueB:'Caviglie rigide come molle',
+ steps:['In piedi, ginocchia quasi tese','Saltella velocemente sulle punte, contatti a terra brevissimi','Talloni che non toccano terra','Braccia rilassate'],
+ ok:['Contatti brevi e silenziosi','Busto dritto'],err:['Atterrare sui talloni','Piegare molto le ginocchia'],easy:'Saltelli più bassi e lenti',hard:'Su una gamba sola'},
+{id:'broadjump',n:'Salto in lungo da fermo',cat:'calcio',req:[],lv:[2,3],mode:'reps',base:[4,5,6],tempo:2,m:{p:['quad','glute','calf'],s:['core']},
+ A:{...SQ_B,a1:{ang:[120,110]},a2:{ang:[125,115]}},B:{h:[78,52],t:-70,a1:{ang:[-40,-45]},a2:{ang:[-45,-50]},l1:{ang:[110,100],f:30},l2:{ang:[120,110],f:30}},
+ cueA:'Carica braccia e anche',cueB:'Esplodi in avanti e atterra morbido',
+ steps:['Piedi alla larghezza delle anche','Porta indietro le braccia e piega le anche','Salta più lontano che puoi in avanti','Atterra piegando le ginocchia e fermati 2 secondi'],
+ ok:['Atterraggio morbido e fermo','Ginocchia in linea con i piedi'],err:['Atterrare a gambe tese','Ginocchia che crollano dentro'],easy:'Salti più corti',hard:'Tre salti di fila'}
 ];
 const EXM=Object.fromEntries(EX.map(e=>[e.id,e]));
 const CATS={tutti:'Tutti',massa:'Massa',gambe:'Gambe',sopra:'Parte alta',core:'Core',calcio:'Sport e condizione',prevenzione:'Prevenzione',mobilita:'Mobilità',pausa:'Pause lavoro',riscaldamento:'Riscaldamento',defaticamento:'Defaticamento'};
@@ -550,8 +582,8 @@ const FOCUS={
  gambe:{n:'Gambe ed esplosività',pool:['squat','affondo','bulgaro','jumpsquat','wallsit','calf','hinge','ponte']},
  sopra:{n:'Forza parte alta + core',pool:['pushup','pushknee','pullup','dip','plank','superman','birddog','deadbug','climber']},
  completo:{n:'Total body',pool:['squat','pushup','pushknee','affondo','pullup','dip','plank','ponte','climber','superman']},
- prevenzione:{n:'Prevenzione infortuni',pool:['nordic','calf','ponte','birddog','deadbug','wallsit','hinge','affondo','plank']},
- calcio:{n:'Condizione e velocità',pool:['skip','jumpsquat','climber','affondo','calf','squat','plank']},
+ prevenzione:{n:'Prevenzione infortuni',pool:['copenhagen','facepull','nordic','calf','ponte','birddog','deadbug','wallsit','hinge','affondo','plank']},
+ calcio:{n:'Condizione e velocità',pool:['pogo','broadjump','skip','jumpsquat','climber','affondo','calf','squat','plank']},
  mobilita:{n:'Recupero e mobilità',mob:true,pool:['catcow','cobra','flessori','flessinpiedi','polpacci','stretchfem','deadbug','ponte','estensione','bambino','hinge']},
  pre:{n:'Attivazione prima dello sport',fixed:['skip','circ','squatlento','affondo','hinge','flessinpiedi','calf','ponte']}
 };
@@ -683,7 +715,7 @@ function schedaSheet(steps,title,D){
 const CONCERNS=[['fianchi','Fianchi / maniglie dell\'amore'],['pancia','Pancia'],['spalle','Spalle strette'],['braccia','Braccia sottili'],['petto','Petto poco sviluppato'],['gambe','Gambe magre'],['glutei','Glutei'],['postura','Postura curva, spalle in avanti'],['fiato','Poco fiato / resistenza']];
 const BGOALS=[['massa','Mettere massa'],['ricomp','Massa e meno grasso'],['grasso','Perdere grasso'],['tono','Tonificare e mantenere']];
 const KW={fianchi:/fianc|maniglie|lateral|vita larga/i,pancia:/pancia|addom|ventre|panza/i,spalle:/spall/i,braccia:/bracci|bicip|tricip/i,petto:/petto|pettoral/i,gambe:/gamb|cosc|polpacc/i,glutei:/glute|sedere|culo/i,postura:/postur|gobb|curv|schiena/i,fiato:/fiato|resisten|stanc|cardio/i};
-const EMPH={spalle:[{slot:'ypost',sets:2,range:[12,15],rest:45},{slot:'spalle',sets:2,range:[10,15],rest:60}],braccia:[{slot:'bicipiti',sets:2,range:[10,15],rest:60},{slot:'tricipiti',sets:2,range:[8,15],rest:60,alt:'pushdiamond'}],petto:[{slot:'petto2',sets:2,range:[8,15],rest:60}],gambe:[{slot:'squat',sets:2,range:[10,15],rest:75,legs:true}],glutei:[{slot:'posteriori',sets:2,range:[10,15],rest:60,legs:true}],postura:[{slot:'remelast',sets:2,range:[12,15],rest:45,alt:'superman'},{slot:'ypost',sets:2,range:[12,15],rest:45}],fianchi:[{ex:'deadbug',sets:2,range:[6,10],rest:40}],pancia:[{ex:'deadbug',sets:2,range:[6,10],rest:40}]};
+const EMPH={spalle:[{slot:'ypost',sets:2,range:[12,15],rest:45},{slot:'spalle',sets:2,range:[10,15],rest:60}],braccia:[{slot:'bicipiti',sets:2,range:[10,15],rest:60},{slot:'tricipiti',sets:2,range:[8,15],rest:60,alt:'pushdiamond'}],petto:[{slot:'petto2',sets:2,range:[8,15],rest:60}],gambe:[{slot:'squat',sets:2,range:[10,15],rest:75,legs:true}],glutei:[{slot:'posteriori',sets:2,range:[10,15],rest:60,legs:true}],postura:[{ex:'facepull',sets:2,range:[12,15],rest:45},{slot:'remelast',sets:2,range:[12,15],rest:45,alt:'superman'},{slot:'ypost',sets:2,range:[12,15],rest:45}],fianchi:[{ex:'deadbug',sets:2,range:[6,10],rest:40}],pancia:[{ex:'deadbug',sets:2,range:[6,10],rest:40}]};
 const bodyC=()=>(S.body&&S.body.c)||[];
 const fatFocus=()=>bodyC().some(c=>c==='fianchi'||c==='pancia'||c==='fiato')||(S.body&&(S.body.g==='grasso'||S.body.g==='ricomp'));
 function bodyAdvice(b){const c=b.c||[],t=[];
@@ -757,7 +789,7 @@ function planFor(d){
  const wn=Math.floor(diffD('2024-01-01',mon)/7);if(k%2===0)return{focus:'massa',why:'Giorno libero: si costruisce muscolo'};return{focus:ROT[(Math.floor(k/2)+wn)%ROT.length],why:'Giorno libero: condizione fisica'};
 }
 const ZONES=[['ginocchio','Ginocchio'],['caviglia','Caviglia'],['anca','Anca / inguine'],['schiena','Schiena bassa'],['spalla','Spalla'],['polso','Polso / gomito'],['collo','Collo']];
-const ZLOAD={ginocchio:['squat','squatpausa','affondo','bulgaro','pistol','jumpsquat','wallsit','skip','nordic','flessori','climber'],caviglia:['skip','jumpsquat','calf','climber','affondo','pistol','polpacci','bulgaro'],anca:['affondo','bulgaro','pistol','jumpsquat','climber','flessori','skip'],schiena:['hinge','rowzaino','superman','estensione','jumpsquat','cobra','yraise','nordic'],spalla:['pushup','pushknee','pushfeet','pushdiamond','pusharcher','dip','pressz','pullup','pullneg','climber','circ','yraise'],polso:['pushup','pushknee','pushfeet','pushdiamond','pusharcher','dip','birddog','catcow','climber','cobra','plank'],collo:['pullup','pullneg']};
+const ZLOAD={ginocchio:['broadjump','pogo','squat','squatpausa','affondo','bulgaro','pistol','jumpsquat','wallsit','skip','nordic','flessori','climber'],caviglia:['pogo','broadjump','skip','jumpsquat','calf','climber','affondo','pistol','polpacci','bulgaro'],anca:['copenhagen','affondo','bulgaro','pistol','jumpsquat','climber','flessori','skip'],schiena:['hinge','rowzaino','superman','estensione','jumpsquat','cobra','yraise','nordic'],spalla:['pushup','pushknee','pushfeet','pushdiamond','pusharcher','dip','pressz','pullup','pullneg','climber','circ','yraise'],polso:['pushup','pushknee','pushfeet','pushdiamond','pusharcher','dip','birddog','catcow','climber','cobra','plank'],collo:['pullup','pullneg']};
 function painOn(){return ZONES.filter(z=>S.pain&&S.pain[z[0]])}
 function blocked(e){return !!e&&painOn().some(z=>(ZLOAD[z[0]]||[]).includes(e.id))}
 function blockedBy(e){return painOn().filter(z=>(ZLOAD[z[0]]||[]).includes(e.id)).map(z=>z[1].toLowerCase())}
@@ -943,12 +975,12 @@ const SESS={
    {slot:'addome',ex:'crunchinv',sets:2,range:[10,15],rest:45}]}
 };
 const EXTRA={
- A:[{slot:'tricipiti',sets:3,range:[8,15],rest:60,alt:'pushdiamond'},{slot:'polpacci',sets:3,range:[15,20],rest:45,legs:true},{ex:'birddog',sets:2,range:[6,8],rest:45}],
- B:[{slot:'rematore',sets:3,range:[8,12],rest:60,alt:'superman'},{slot:'posteriori',sets:3,range:[10,12],rest:60,legs:true},{ex:'superman',sets:2,range:[10,12],rest:45}],
+ A:[{ex:'copenhagen',time:true,sets:2,rest:40,legs:true},{slot:'tricipiti',sets:3,range:[8,15],rest:60,alt:'pushdiamond'},{slot:'polpacci',sets:3,range:[15,20],rest:45,legs:true},{ex:'birddog',sets:2,range:[6,8],rest:45}],
+ B:[{ex:'facepull',sets:3,range:[12,15],rest:45},{slot:'rematore',sets:3,range:[8,12],rest:60,alt:'superman'},{slot:'posteriori',sets:3,range:[10,12],rest:60,legs:true},{ex:'superman',sets:2,range:[10,12],rest:45}],
  C:[{slot:'tricipiti',sets:3,range:[8,15],rest:60,alt:'pushdiamond'},{slot:'remelast',sets:3,range:[12,15],rest:45,alt:'superman'},{ex:'deadbug',sets:2,range:[6,10],rest:45}]};
 function buildSession(L,D,loc){
  const eq=LOCS[loc].eq,ss=SESS[L],ph=phaseOf(),steps=[];const noLegs=noLegsToday();
- let wu=['skip','circ','rematore','hinge','squatlento','chintuck'].map(i=>EXM[i]).filter(e=>!blocked(e)).slice(0,D>=60?5:3);wu.forEach((e,i)=>{steps.push({type:'switch',ex:e,secs:5});steps.push({type:'work',ex:e,secs:30,label:'Riscaldamento · '+(i+1)+'/'+wu.length,phase:'warm'})});
+ let wu=[...(SP().legs?['kneewall']:[]),'skip','circ','rematore','hinge','squatlento','chintuck'].map(i=>EXM[i]).filter(e=>!blocked(e)).slice(0,D>=60?5:3);wu.forEach((e,i)=>{steps.push({type:'switch',ex:e,secs:5});steps.push({type:'work',ex:e,secs:30,label:'Riscaldamento · '+(i+1)+'/'+wu.length,phase:'warm'})});
  const RA=readyAdj();
  if(ss.speed&&SP().speed&&D>=20&&!noLegs&&!blocked(EXM.skip)&&RA>=0){const j=level()>=2&&!blocked(EXM.jumpsquat)?EXM.jumpsquat:EXM.climber;
   steps.push({type:'switch',ex:EXM.skip,secs:5});for(let k=1;k<=2;k++){steps.push({type:'work',ex:EXM.skip,secs:20,label:'Velocità · skip '+k+'/2',phase:'main'});steps.push({type:'rest',secs:30,ex:k<2?EXM.skip:j})}
@@ -962,7 +994,7 @@ function buildSession(L,D,loc){
  if(D>=30&&bodyC().length){const used=new Set(items.flatMap(it=>[it.slot,it.ex]).filter(Boolean));const em=[];bodyC().forEach(k=>(EMPH[k]||[]).forEach(it=>{if(!used.has(it.slot||it.ex)&&!(noLegs&&it.legs)&&em.length<(D>=45?2:1)){em.push({...it,emph:1});used.add(it.slot||it.ex)}}));const ci=items.findIndex(it=>it.slot==='addome'||it.time);items=ci<0?[...items,...em]:[...items.slice(0,ci),...em,...items.slice(ci)]}
  items.forEach(it=>{
   let ex=null,sl=null,lvl=0,nl=1,fixed=false;
-  if(it.time){ex=EXM[it.ex];if(blocked(ex))return;const n=Math.min(5,adjSets(phaseSets(it.sets,ph),items.indexOf(it),RA)+(it.plus||0));const secs=[30,40,50][level()-1]+(ph.k==='spinta'?10:0);
+  if(it.time){ex=EXM[it.ex];if(blocked(ex)||!ex.req.every(r=>eq.includes(r)))return;const n=Math.min(5,adjSets(phaseSets(it.sets,ph),items.indexOf(it),RA)+(it.plus||0));const secs=((it.ex==='plank'?[30,40,50][level()-1]:workAmt(ex))+(ph.k==='spinta'?10:0))*(ex.side?2:1);
    for(let k=1;k<=n;k++){steps.push({type:'rest',secs:k===1?10:it.rest,ex});steps.push({type:'work',ex,secs,label:ex.n+' · serie '+k+'/'+n,phase:'main'})}return}
   sl=MASS.find(x=>x.id===it.slot);if(it.orSlot&&sl&&(sl.req||[]).some(r=>!eq.includes(r)))sl=MASS.find(x=>x.id===it.orSlot);
   if(it.ex){const e=EXM[it.ex];if(e.req.every(r=>eq.includes(r))&&!blocked(e)){ex=e;fixed=true}}
@@ -1217,6 +1249,7 @@ function vHome(m){
  <h1 style="margin-top:8px">Ciao ${esc(S.name)}, ${G('pronto','pronta')} a muoverti?</h1>
  <div class="chips" style="margin-bottom:12px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px">${S.locs.map(l=>`<button class="chip ${S.loc===l.id?'on':''}" data-loc="${l.id}" style="flex:none">${I(l.ic||'home')} ${esc(l.n)}</button>`).join('')}<button class="chip" id="plm" style="flex:none" aria-label="Gestisci luoghi">${I('plus')} Luoghi</button></div>
  ${!wkSet&&!SP().none?`<button class="card row" id="setw" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('ball','ic gold')}<div style="flex:1"><b>Quando fai ${esc(SP().w)} questa settimana?</b><div class="small mu">Segna i giorni e il piano si sistema da solo</div></div>${I('chev')}</button>`:''}
+ ${(S.deloadUntil&&today()<=S.deloadUntil)?`<div class="note bad">${I('info','ic')} Settimana leggera fino al ${fmt(S.deloadUntil)}: meno serie, recuperi meglio.</div>`:boostOn()?`<div class="note okk">${I('bolt','ic')} Acceleratore attivo fino al ${fmt(S.boostUntil)}: sali di livello prima.</div>`:''}
  <div class="hero">
   <div class="small" style="color:var(--gold)">Settimana ${progWeek()} di 8 · ${ph.n} · ${esc(pl.done&&!homeFocus?'già fatta oggi':pl.why)}</div>
   <div style="font:700 26px 'Barlow Condensed',sans-serif;margin:4px 0">${esc(F.n)}</div>
@@ -1227,20 +1260,21 @@ function vHome(m){
   ${F.mass?`<button class="chip" id="scheda" style="margin-top:10px;background:rgba(255,255,255,.12);color:#fff;width:100%;justify-content:center">${I('list')} Vedi la scheda completa</button>`:''}
   <div class="row" style="flex-wrap:wrap;gap:4px 14px;margin-top:10px"><button class="chip" id="chg" style="background:transparent;color:#D9CCEF;padding:4px 0">${I('refresh')} Cambia tipo</button>${S.ready&&S.ready.date===today()?`<button class="chip" id="rdy" style="background:transparent;color:${S.ready.adj<0?'#F7C1C1':S.ready.adj>0?'#CFE8A9':'#D9CCEF'};padding:4px 0">${I('flame')} ${S.ready.adj<0?'Giornata da gestire':S.ready.adj>0?'Giornata top':'Giornata normale'}</button>`:''}<button class="chip" id="pain" style="background:transparent;color:${painOn().length?'#F7C1C1':'#D9CCEF'};padding:4px 0">${I('info')} ${painOn().length?'Fastidi: '+painOn().map(z=>z[1].toLowerCase()).join(', '):'Fastidi'}</button></div>
  </div>
- <button class="card row" id="prot" style="width:100%;border:0;color:var(--tx);text-align:left">${ring(kcalDay(),kcalTarget(),52)}${ring(protDay(),protTarget(),52)}<div style="flex:1"><b>Alimentazione</b><div class="small mu">${kcalTarget()?'Calorie e proteine · '+GOALS[S.prot.goal||'massa'][0].toLowerCase():'Completa i dati per gli obiettivi'}</div></div>${I('plus','ic gold')}</button>
- <div class="${SP().none?'':'grid2'}">
-  <button class="tile" id="pausa" style="width:100%">${I(JB().k==='autista'?'wheel':'clock')}<div style="font-weight:600;margin-top:4px">${esc(JB().pause)}</div><div class="small dim">4 min · ${JB().kind===2?'schiena, gambe, piedi':JB().kind===3?'schiena e spalle':'collo, schiena, anche'}</div></button>
-  ${SP().none?'':`<button class="tile" id="calcio">${I('ball')}<div style="font-weight:600;margin-top:4px">Registra ${esc(SP().w)}</div><div class="small dim">gara o allenamento</div></button>`}
+ <div class="qrow">
+  <button class="qcard" id="prot"><div class="row" style="gap:2px">${ring(kcalDay(),kcalTarget(),40)}${ring(protDay(),protTarget(),40)}</div><b>Alimentazione</b><span>${kcalTarget()?(kcalTarget()-kcalDay()>0?'mancano '+(kcalTarget()-kcalDay())+' kcal':'calorie ok'):'completa i dati'}</span></button>
+  ${(()=>{const {c,v,done}=chState();return `<button class="qcard" id="chq"><div style="font:700 22px 'Barlow Condensed',sans-serif;color:${done?'var(--ok)':'var(--gold)'}">${v}/${c.goal}</div><div style="height:5px;background:var(--card2);border-radius:3px;margin:4px 0"><div style="width:${Math.round(v/c.goal*100)}%;height:100%;background:${done?'var(--ok)':'var(--gold)'};border-radius:3px"></div></div><b>Sfida</b><span>${esc(c.n)}</span></button>`})()}
+  <button class="qcard" id="pausa">${I(JB().k==='autista'?'wheel':'clock','ic gold')}<b>${esc(JB().pause)}</b><span>4 min · ${JB().kind===2?'schiena e gambe':JB().kind===3?'schiena e spalle':'collo e schiena'}</span></button>
+  ${SP().none?'':`<button class="qcard" id="calcio">${I('ball','ic gold')}<b>Registra ${esc(SP().w)}</b><span>gara o allenamento</span></button>`}
  </div>
- ${(progWeek()===8||(progWeek()===1&&cycleInfo(1)))?`<button class="card row" id="repb" style="width:100%;border:1px solid var(--gold);color:var(--tx);text-align:left;margin-top:12px;background:var(--card)">${I('medal','ic gold')}<div style="flex:1"><b>${progWeek()===8?'Ultima settimana del ciclo!':'Ciclo completato!'}</b><div class="small mu">Guarda il resoconto e rifai il test</div></div>${I('chev')}</button>`:''}
- ${retest?`<button class="card row" id="rt" style="width:100%;border:0;color:var(--tx);text-align:left;margin-top:12px">${I('target','ic gold')}<div style="flex:1"><b>È ora di rifare il test</b><div class="small mu">Sono passate 4 settimane: vediamo i progressi</div></div>${I('chev')}</button>`:''}
- <h2>Nel programma di oggi</h2>
- <div id="prev"></div>
- ${chCard()}
- ${(S.deloadUntil&&today()<=S.deloadUntil)?`<div class="card small" style="border:1px solid var(--bad)"><b style="color:var(--bad)">Settimana leggera anticipata</b><div class="mu">Fino al ${fmt(S.deloadUntil)} meno serie e niente sforzi al limite: recuperi e poi riparti più forte.</div></div>`:boostOn()?`<div class="card small" style="border:1px solid var(--ok)"><b style="color:var(--ok)">Acceleratore attivo</b><div class="mu">Fino al ${fmt(S.boostUntil)} gli esercizi salgono di livello 2 ripetizioni prima.</div></div>`:''}
- ${(()=>{const m=S.meas.filter(x=>x.peso).sort((a,b)=>a.date.localeCompare(b.date)).pop();return S.prof&&S.prof.h&&(!m||diffD(m.date,today())>=7)?`<button class="card row" id="weigh" style="width:100%;border:0;color:var(--tx);text-align:left">${I('ruler','ic gold')}<div style="flex:1"><b>Pesata della settimana</b><div class="small mu">Serve per regolare le calorie da sola</div></div>${I('plus','ic gold')}</button>`:''})()}
- ${!S.body?`<button class="card row" id="bqh" style="width:100%;border:1px dashed var(--gold);color:var(--tx);text-align:left;margin-top:12px">${I('target','ic gold')}<div style="flex:1"><b>Cosa vuoi migliorare del tuo corpo?</b><div class="small mu">2 domande e adatto esercizi e alimentazione</div></div>${I('chev')}</button>`:''}
- ${!S.dismissInstall?`<div class="card" style="margin-top:12px"><div class="row between"><b>${I('info','ic gold')} Mettila sul telefono</b><button class="chip" id="dism" style="padding:5px 9px">${I('x')}</button></div><div class="small mu" style="margin-top:6px">Funziona anche offline. <b>iPhone (Safari)</b>: tasto Condividi → "Aggiungi alla schermata Home". <b>Android (Chrome)</b>: menu ⋮ → "Aggiungi a schermata Home". Avrai l'icona Showtime Fit come un'app.</div></div>`:''}`;
+ ${(()=>{const m=S.meas.filter(x=>x.peso).sort((a,b)=>a.date.localeCompare(b.date)).pop();const todo=[];
+  if(progWeek()===8||(progWeek()===1&&cycleInfo(1)))todo.push(['repb','medal',progWeek()===8?'Ultima settimana del ciclo: guarda il resoconto':'Ciclo completato: guarda il resoconto']);
+  if(retest)todo.push(['rt','target','Rifai il test di livello (4 settimane)']);
+  if(S.prof&&S.prof.h&&(!m||diffD(m.date,today())>=7))todo.push(['weigh','ruler','Pesata della settimana']);
+  if(!S.body)todo.push(['bqh','target','Questionario: cosa vuoi migliorare?']);
+  if(!S.dismissInstall)todo.push(['inst','info','Mettila sul telefono come un\'app']);
+  return todo.length?`<div class="card" style="padding:4px 12px"><div class="small gold" style="padding-top:8px">Da fare</div>${todo.map(([id,ic,t])=>`<button class="todo" id="${id}">${I(ic,'ic gold')}<span style="flex:1">${t}</span>${I('chev','ic dim')}</button>`).join('')}</div>`:''})()}
+ <button class="sect" id="prevt"><span>${F.mass?'Esercizi di oggi e muscoli della settimana':'Esercizi di oggi'} <span class="dim">· ${nEx}</span></span>${I(S.homeOpen?'up':'down','ic')}</button>
+ <div id="prev" style="display:${S.homeOpen?'block':'none'}"></div>`;
  const main=steps.filter(s=>(s.type==='work'||s.type==='set')&&(s.phase==='main'||F.fixed));const seen=new Set();const uniq=main.filter(s=>!seen.has(s.ex.id)&&seen.add(s.ex.id));
  $('#prev').innerHTML=(F.mass?`<div class="card"><div class="small mu" style="margin-bottom:8px">Muscoli della settimana · serie fatte (obiettivo 10-20)</div>${muscleBars(weekSets())}</div>`:'')+uniq.map(s=>exRow(s.ex,s.type==='set'?s.sets+' serie × '+(s.range||MRANGE).join('-')+(s.ex.side?' per lato':'')+(s.kg?' · zaino '+String(s.kg).replace('.',',')+' kg':'')+(s.fixed?'':' · livello '+(s.lvl+1)+'/'+s.nl):s.reps?s.reps+' rip.'+(s.ex.side?' per lato':''):Math.round(s.secs/(s.ex.side?2:1))+' sec'+(s.ex.side?' per lato':''),s.type==='set'&&s.kg?{bag:s.ex.bag||'back'}:{})).join('');
  bindExRows(m);
@@ -1263,13 +1297,15 @@ function vHome(m){
  if($('#bqh'))$('#bqh').onclick=()=>bodyQuiz(render);
  if($('#chsh'))$('#chsh').onclick=chShare;
  if($('#weigh'))$('#weigh').onclick=measForm;
- if($('#dism'))$('#dism').onclick=()=>{S.dismissInstall=true;save();render()};
+ $('#chq').onclick=()=>{sheet(chCard()+'<div class="hint">Ogni lunedì arriva una sfida nuova. Completala per 50 monete.</div>',(e,c)=>{e.querySelector('#chsh').onclick=chShare})};
+ if($('#inst'))$('#inst').onclick=()=>sheet(`<h2 style="margin-top:0">Mettila sul telefono</h2><div class="small mu" style="line-height:1.6">Funziona anche offline. <b>iPhone (Safari)</b>: tasto Condividi → "Aggiungi alla schermata Home". <b>Android (Chrome)</b>: menu ⋮ → "Aggiungi a schermata Home". Avrai l'icona Showtime Fit come un'app.</div><button class="btn sec" id="dism" style="margin-top:12px">Fatto, non mostrarlo più</button>`,(e,c)=>{e.querySelector('#dism').onclick=()=>{S.dismissInstall=true;save();c();render()}});
+ $('#prevt').onclick=()=>{S.homeOpen=!S.homeOpen;save();render()};
 }
 function exRow(e,sub,o={}){return `<div class="list-ex" role="button" tabindex="0" data-ex="${e.id}"><div class="th">${staticFig(e,e.id==='plank'||e.id==='wallsit'?0:1,o)}</div><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(e.n)}</div><div class="small mu">${esc(sub||'')}</div><div>${groupsOf(e).slice(0,2).map(x=>`<span class="tag g">${GRPN[x]}</span>`).join('')}</div></div><button class="star ${isFav(e.id)?'on':''}" data-fav="${e.id}" aria-label="Preferito">${I('star')}</button></div>`}
 function bindExRows(m,after){m.querySelectorAll('[data-ex]').forEach(b=>b.onclick=ev=>{const f=ev.target.closest('[data-fav]');if(f){toggleFav(f.dataset.fav);f.classList.toggle('on',isFav(f.dataset.fav));after&&after();return}exDetail(EXM[b.dataset.ex])})}
 const GROUPS=[['petto','Petto'],['schiena','Schiena'],['spalle','Spalle'],['bicipiti','Bicipiti'],['tricipiti','Tricipiti'],['addome','Addome'],['gambe','Gambe'],['glutei','Glutei e femorali'],['polpacci','Polpacci'],['cardio','Cardio e velocità'],['mobilita','Mobilità e stretching']];
 const GRPN=Object.fromEntries(GROUPS);
-const GRPX={pushup:['petto','tricipiti'],pushknee:['petto','tricipiti'],pushfeet:['petto','spalle','tricipiti'],pushdiamond:['tricipiti','petto'],pusharcher:['petto','tricipiti'],dip:['tricipiti','petto'],pressz:['spalle','tricipiti'],yraise:['spalle','schiena'],curl:['bicipiti'],pullup:['schiena','bicipiti'],pullneg:['schiena','bicipiti'],rowzaino:['schiena','bicipiti'],rowband:['schiena','bicipiti'],rematore:['schiena','spalle'],superman:['schiena','glutei'],birddog:['addome','schiena'],plank:['addome'],deadbug:['addome'],crunchinv:['addome'],climber:['addome','cardio'],skip:['cardio'],jumpsquat:['gambe','cardio'],squat:['gambe','glutei'],squatpausa:['gambe','glutei'],squatlento:['gambe','mobilita'],affondo:['gambe','glutei'],bulgaro:['gambe','glutei'],pistol:['gambe','glutei'],wallsit:['gambe'],ponte:['glutei'],ponteuna:['glutei'],hinge:['glutei','mobilita'],nordic:['glutei'],calf:['polpacci'],circ:['spalle','mobilita'],chintuck:['mobilita'],estensione:['mobilita'],catcow:['mobilita'],cobra:['mobilita'],flessori:['mobilita'],flessinpiedi:['mobilita'],polpacci:['polpacci','mobilita'],stretchfem:['mobilita'],bambino:['mobilita']};
+const GRPX={pushup:['petto','tricipiti'],pushknee:['petto','tricipiti'],pushfeet:['petto','spalle','tricipiti'],pushdiamond:['tricipiti','petto'],pusharcher:['petto','tricipiti'],dip:['tricipiti','petto'],pressz:['spalle','tricipiti'],yraise:['spalle','schiena'],curl:['bicipiti'],pullup:['schiena','bicipiti'],pullneg:['schiena','bicipiti'],rowzaino:['schiena','bicipiti'],rowband:['schiena','bicipiti'],rematore:['schiena','spalle'],superman:['schiena','glutei'],birddog:['addome','schiena'],plank:['addome'],deadbug:['addome'],crunchinv:['addome'],climber:['addome','cardio'],skip:['cardio'],jumpsquat:['gambe','cardio'],squat:['gambe','glutei'],squatpausa:['gambe','glutei'],squatlento:['gambe','mobilita'],affondo:['gambe','glutei'],bulgaro:['gambe','glutei'],pistol:['gambe','glutei'],wallsit:['gambe'],ponte:['glutei'],ponteuna:['glutei'],hinge:['glutei','mobilita'],nordic:['glutei'],calf:['polpacci'],copenhagen:['gambe','addome'],facepull:['spalle','schiena'],kneewall:['mobilita','polpacci'],pogo:['cardio','polpacci'],broadjump:['cardio','gambe'],circ:['spalle','mobilita'],chintuck:['mobilita'],estensione:['mobilita'],catcow:['mobilita'],cobra:['mobilita'],flessori:['mobilita'],flessinpiedi:['mobilita'],polpacci:['polpacci','mobilita'],stretchfem:['mobilita'],bambino:['mobilita']};
 function groupsOf(e){return GRPX[e.id]||['mobilita']}
 const isFav=id=>(S.favs||[]).includes(id);
 function toggleFav(id){S.favs=S.favs||[];const i=S.favs.indexOf(id);i<0?S.favs.push(id):S.favs.splice(i,1);save();toast(i<0?'Aggiunto ai preferiti':'Tolto dai preferiti')}
@@ -1359,7 +1395,7 @@ function startPlayer(steps,meta){
  unlockAudio();keepAwake(true);COACH.prime();
  const el=document.createElement('div');el.className='player';el.style.zoom=S.fontK||1;document.body.appendChild(el);
  PL={layer:openLayer(playerBack),mass:{},steps,meta,i:0,rem:steps[0].secs,paused:false,last:performance.now(),el,start:Date.now(),lastBeep:-1,halfDone:false,worked:0};
- el.innerHTML=`<div class="row between"><button class="chip" id="px" aria-label="Chiudi">${I('x')}</button><span class="small mu" id="plab" style="flex:1;text-align:center"></span><div class="row" style="gap:6px"><button class="chip" id="pvoice" aria-label="Voce" style="padding:7px">${I(S.set.voice!==false?'vol':'voloff')}</button>${CAM_OK?`<button class="chip" id="pcam" aria-label="Fotocamera" style="padding:7px">${I('cam')}</button>`:''}<span class="small mu" id="pcount"></span></div></div>
+ el.innerHTML=`<div class="row between"><button class="chip" id="px" aria-label="Chiudi">${I('x')}</button><span class="small mu" id="plab" style="flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px"></span><div class="row" style="gap:6px"><button class="chip" id="pvoice" aria-label="Voce" style="padding:7px">${I(S.set.voice!==false?'vol':'voloff')}</button>${CAM_OK?`<button class="chip" id="pcam" aria-label="Fotocamera" style="padding:7px">${I('cam')}</button>`:''}<span class="small mu" id="pcount"></span></div></div>
  <div class="pbar" style="margin:10px 0"><i id="ppr"></i></div>
  <div id="ptitle" style="font:700 28px 'Barlow Condensed',sans-serif;text-align:center"></div>
  <div id="psub" class="small gold" style="text-align:center;min-height:18px"></div>
