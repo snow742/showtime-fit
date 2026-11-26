@@ -1054,6 +1054,80 @@ function planWeek(mon){
  return res;
 }
 
+/* ---------- RIEPILOGO DELLA SETTIMANA ---------- */
+function weekSum(mon){const end=addD(mon,6),inW=d=>d>=mon&&d<=end;const wk=S.wk.filter(w=>inW(w.date));
+ const sess=Object.keys(sessDone(mon)).length,mins=wk.reduce((a,w)=>a+(w.min||0),0);
+ const sport=[...new Set(S.calLog.filter(c=>inW(c.date)).map(c=>c.date))].length||[...Array(7)].map((_,i)=>addD(mon,i)).filter(d=>d<=today()&&isCalcio(d)).length;
+ const runs=(S.runs||[]).filter(r=>inW(r.date)),km=Math.round(runs.reduce((a,r)=>a+(r.km||0),0)*10)/10;
+ const hrs=wk.filter(w=>w.hr);const hrAvg=hrs.length?Math.round(hrs.reduce((a,w)=>a+w.hr.avg,0)/hrs.length):null,hrMax=hrs.length?Math.max(...hrs.map(w=>w.hr.max)):null;
+ const rp=wk.filter(w=>w.rpe).map(w=>w.rpe);const rpe=rp.length?Math.round(rp.reduce((a,b)=>a+b,0)/rp.length*10)/10:null;
+ const ms=S.meas.filter(x=>x.peso).sort((a,b)=>a.date.localeCompare(b.date));const wIn=ms.filter(x=>inW(x.date)).pop(),wPrev=ms.filter(x=>x.date<mon).pop();
+ const dPeso=wIn&&wPrev?Math.round((wIn.peso-wPrev.peso)*10)/10:null;
+ const xp=wk.reduce((a,w)=>a+(w.min||0)*2+(w.partial?0:20),0);
+ return {sess,mins,n:wk.length,sport,runs:runs.length,km,inj:injWeek(mon),hrAvg,hrMax,rpe,peso:wIn?wIn.peso:null,dPeso,xp}}
+function weekVerdict(r){return r.sess>=3?['Settimana perfetta','Tutte e 3 le sessioni fatte. Così si cresce.']:r.sess===2?['Buona settimana','2 sessioni su 3: con i turni è un ottimo risultato.']:r.sess===1?['Settimana difficile','Una sessione è meglio di zero. La prossima puntiamo a 2.']:['Settimana di pausa','Capita. Ripartiamo con calma: anche la versione corta conta.']}
+function weekAdvice(r){const a=[];if(r.rpe&&r.rpe>=8)a.push('Le sessioni ti sono sembrate molto dure: la prossima settimana resta su una fatica di 6-7.');else if(r.rpe&&r.rpe<=4)a.push('Fatica bassa: la prossima settimana puoi spingere un po\' di più, oppure alzare il livello.');
+ if(SP().legs&&r.inj<2)a.push('Anti-infortunio '+r.inj+'/2: sono solo 10 minuti, mettili dopo una sessione.');
+ if(r.sport>=3&&r.sess>=3)a.push('Tanto '+SP().w+' e tutte le sessioni: dormi bene e mangia abbastanza proteine.');
+ if(r.dPeso!=null&&Math.abs(r.dPeso)>=1)a.push('Peso '+(r.dPeso>0?'+':'')+String(r.dPeso).replace('.',',')+' kg in una settimana: è tanto, controlla le calorie.');
+ if(!a.length)a.push('Continua così: costanza batte intensità.');return a}
+function weekSheet(mon){S.repSeen=S.repSeen||{};S.repSeen[mon]=1;save();const r=weekSum(mon),nx=addD(mon,7);const live=mon===monday(today())&&dIdx(today())<6;const [vt,vd]=live?['Settimana in corso','Fin qui '+r.sess+' session'+(r.sess===1?'e':'i')+' su 3 · '+(6-dIdx(today())===1?'manca 1 giorno':'mancano '+(6-dIdx(today()))+' giorni')+'.']:weekVerdict(r);
+ const st=(v,l,c)=>`<div class="stat" style="padding:10px"><span class="small mu">${l}</span><b style="${c?'color:'+c:''}">${v}</b></div>`;
+ sheet(`<div class="small gold">Riepilogo · ${fmt(mon)} – ${fmt(addD(mon,6))}</div><h2 style="margin:2px 0 2px">${vt}</h2><p class="small mu" style="margin:0 0 10px">${vd}</p>
+ <div style="display:flex;gap:6px;margin-bottom:10px">${['A','B','C'].map(L=>{const ok=Object.values(sessDone(mon)).includes(L);return `<div style="flex:1;text-align:center;padding:10px 4px;border-radius:12px;background:${ok?'var(--gold)':'#22143B'};color:${ok?'#2A1A47':'#8A7AAA'};font-weight:700">${L} ${ok?'✓':''}</div>`}).join('')}</div>
+ <div class="grid2" style="margin-bottom:8px">${st(r.n,'Allenamenti')}${st(r.mins+'′','Minuti')}${SP().none?'':st(r.sport,esc(SP().n))}${st(r.runs?(r.runs+(r.km?' · '+String(r.km).replace('.',',')+' km':'')):'0','Corse')}${SP().legs?st(r.inj+'/2','Anti-infortunio',r.inj>=2?'var(--ok)':''):''}${r.hrAvg?st(r.hrAvg+' · max '+r.hrMax,'Battiti medi','#F0997B'):''}${r.rpe?st(String(r.rpe).replace('.',','),'Fatica media'):''}${r.peso?st(String(r.peso).replace('.',',')+' kg'+(r.dPeso!=null?` <span class="small">(${r.dPeso>0?'+':''}${String(r.dPeso).replace('.',',')})</span>`:''),'Peso'):''}${st('+'+r.xp,'XP guadagnati','var(--gold)')}${st(streak()+' giorni','Serie')}</div>
+ <div class="card" style="padding:10px 12px"><b class="gold">${I('target','ic')} Per la prossima settimana</b>${weekAdvice(r).map(x=>`<div class="small" style="color:#D9CCEF;margin-top:4px">• ${esc(x)}</div>`).join('')}</div>
+ ${nx>monday(today())||nx===monday(today())?`<button class="btn" id="wsnext">${I('cal')} ${(S.wplan||{})[nx]?'Rivedi':'Pianifica'} la prossima settimana</button>`:''}`,(el,close)=>{const b=el.querySelector('#wsnext');if(b)b.onclick=()=>{close();planWizard(nx)}})}
+function weekSumDue(){const t=today(),mon=monday(t),seen=S.repSeen||{};if(dIdx(t)===6&&!seen[mon])return mon;const pm=addD(mon,-7);if(dIdx(t)<=1&&!seen[pm]&&S.wk.some(w=>monday(w.date)===pm))return pm;return null}
+
+/* ---------- TEST ATLETICI ---------- */
+const ATH=[['jump','Salto in lungo da fermo','cm',1,'Piedi pari dietro una linea, slancia le braccia e salta il più lontano possibile. Misura dalla linea al tallone più vicino. 3 tentativi, segna il migliore.'],
+ ['sprint','Scatto 20 metri','s',0,'Circa 25 passi lunghi, oppure dalla linea di fondo un po\' oltre il limite dell\'area grande. Partenza da fermo. 2 tentativi con 2 minuti di pausa. Meglio se il tempo te lo prende un amico.'],
+ ['shuttle','Navetta 5-10-5','s',0,'Tre segni a 5 metri l\'uno dall\'altro. Parti dal centro: 5 m a destra, 10 m a sinistra, 5 m di nuovo al centro. Tocca la linea con la mano ogni volta.'],
+ ['run6','Corsa 6 minuti','m',1,'Più metri possibile in 6 minuti, a ritmo costante. In strada li misura il GPS; in campo conta i giri (un giro di un campo da calcio è circa 300-350 m).']];
+function athLast(){const a=(S.ath||[]).slice().sort((x,y)=>x.date.localeCompare(y.date));return a[a.length-1]||null}
+function athDue(){const l=athLast();return !l||diffD(l.date,today())>=28}
+function athFmt(k,v){if(v==null||v==='')return '–';return k==='sprint'||k==='shuttle'?String(v.toFixed?v.toFixed(2):v).replace('.',','):String(Math.round(v))}
+function athDelta(k,now,prev,better){if(now==null||prev==null)return '';const d=now-prev;if(!d)return '<span class="small dim">=</span>';const good=better?d>0:d<0;return `<span class="small" style="color:${good?'var(--ok)':'var(--gold2)'}">${d>0?'+':''}${k==='sprint'||k==='shuttle'?d.toFixed(2).replace('.',','):Math.round(d)}</span>`}
+function athSheet(){const vals={};const prev=athLast();
+ sheet(`<div id="ath"></div>`,(el,close)=>{const draw=()=>{el.querySelector('#ath').innerHTML=`<h2 style="margin-top:0">${I('bolt','ic gold')} Test atletici</h2>
+  <p class="small mu" style="margin-top:-4px">Ogni 4 settimane: vedi se diventi più esplosivo e resistente anche in campo. Prima fai 10 minuti di riscaldamento. Non farli il giorno dopo una partita; se senti fastidio, salta quel test.</p>
+  ${isCalcio(addD(today(),-1))?`<div class="note bad" style="margin-bottom:8px">${I('info','ic')} Ieri ${esc(SP().w)}: i risultati saranno più bassi del solito. Meglio domani.</div>`:''}
+  ${ATH.map(([k,n,u,hb,how])=>`<div class="card" style="padding:10px 12px"><div class="row between"><b>${n}</b>${prev&&prev[k]!=null?`<span class="small dim">prima: ${athFmt(k,prev[k])} ${u}</span>`:''}</div>
+   <div class="small mu" style="margin:4px 0 8px;line-height:1.45">${how}</div>
+   <div class="row" style="gap:8px"><input type="number" inputmode="decimal" step="${u==='s'?'0.01':'1'}" data-ak="${k}" value="${vals[k]!=null?vals[k]:''}" placeholder="${u}" style="flex:1;min-width:0"><span class="small mu">${u}</span>${u==='s'?`<button class="chip" data-sw="${k}">${I('clock')} Cronometro</button>`:k==='run6'?`<button class="chip" data-r6="1">${I('run')} Avvia 6′</button>`:''}</div></div>`).join('')}
+  <button class="btn" id="athok">${I('check')} Salva i risultati</button>
+  <div class="hint">Puoi salvare anche solo alcuni test: gli altri li aggiungi un altro giorno della stessa settimana.</div>`;
+  const q=x=>el.querySelector(x);
+  el.querySelectorAll('[data-ak]').forEach(i=>i.oninput=()=>{const v=String(i.value).replace(',','.');vals[i.dataset.ak]=v===''?null:+v});
+  el.querySelectorAll('[data-sw]').forEach(b=>b.onclick=()=>stopwatch(t=>{vals[b.dataset.sw]=t;draw()}));
+  el.querySelectorAll('[data-r6]').forEach(b=>b.onclick=()=>run6(m=>{vals.run6=m;draw()}));
+  q('#athok').onclick=()=>{const rec={};ATH.forEach(([k])=>{if(vals[k]!=null&&!isNaN(vals[k])&&vals[k]>0)rec[k]=vals[k]});if(!Object.keys(rec).length){toast('Inserisci almeno un risultato');return}
+   S.ath=S.ath||[];const l=athLast();if(l&&diffD(l.date,today())<7)Object.assign(l,rec,{date:today()});else S.ath.push({date:today(),...rec});save();checkMedals();close();athResult(prev)}};draw()})}
+function athResult(prev){const now=athLast();
+ sheet(`<h2 style="margin-top:0">Risultati</h2>${ATH.map(([k,n,u,hb])=>`<div class="mrow"><span>${n}</span><b>${athFmt(k,now[k])} ${now[k]!=null?u:''} ${prev&&prev.date!==now.date?athDelta(k,now[k],prev[k],hb):''}</b></div>`).join('')}
+ ${prev&&prev.date!==now.date?`<p class="small mu" style="margin-top:10px">Confronto con il ${fmt(prev.date)}. Verde = migliorato.</p>`:'<p class="small mu" style="margin-top:10px">Questi sono i tuoi valori di partenza. Fra 4 settimane te li ricordo.</p>'}<button class="btn" id="arok" style="margin-top:8px">Ok</button>`,(el,c)=>el.querySelector('#arok').onclick=()=>{c();render()})}
+function stopwatch(cb){let t0=0,run=false,iv=null,val=0;unlockAudio();
+ sheet(`<h2 style="margin-top:0">Cronometro</h2><div id="swt" style="font:700 72px 'Barlow Condensed',sans-serif;text-align:center;color:var(--gold)">0,00</div><div id="sws" class="small mu" style="text-align:center;min-height:20px">Tocca Via: 3 beep e parti al quarto</div>
+ <button class="btn" id="swgo" style="margin-top:12px;min-height:70px;font-size:22px">Via</button><button class="btn sec" id="swuse" style="margin-top:8px;display:none">${I('check')} Usa questo tempo</button>`,(el,close)=>{
+  const T=el.querySelector('#swt'),B=el.querySelector('#swgo'),U=el.querySelector('#swuse'),M=el.querySelector('#sws');
+  const show=v=>T.textContent=v.toFixed(2).replace('.',',');
+  B.onclick=()=>{if(run){run=false;clearInterval(iv);val=Math.round((performance.now()-t0)/10)/100;show(val);beep(660,0.15);B.textContent='Rifai';U.style.display='';M.textContent='Fermato';return}
+   B.disabled=true;U.style.display='none';let n=3;M.textContent='3…';beep(880,0.1);const cd=setInterval(()=>{n--;if(n>0){M.textContent=n+'…';beep(880,0.1)}else{clearInterval(cd);beep(1320,0.25);COACH.say('Via!',true);t0=performance.now();run=true;B.disabled=false;B.textContent='Stop';M.textContent='Corri! Tocca Stop all\'arrivo';iv=setInterval(()=>show((performance.now()-t0)/1000),37)}},1000)};
+  U.onclick=()=>{clearInterval(iv);close();cb(val)}})}
+function run6(cb){let gps=(S.runWhere||'strada')==='strada',rem=360,iv=null,watch=null,pos=null,dist=0,started=false;unlockAudio();
+ sheet(`<h2 style="margin-top:0">Corsa 6 minuti</h2><div class="seg" id="r6w" style="margin-bottom:10px"><button data-g="1" class="${gps?'on':''}">${I('pin')} Strada · GPS</button><button data-g="0" class="${!gps?'on':''}">${I('ball')} Campo · giri</button></div>
+ <div id="r6t" style="font:700 72px 'Barlow Condensed',sans-serif;text-align:center">6:00</div><div id="r6d" style="text-align:center;font-weight:700;min-height:24px"></div>
+ <button class="btn" id="r6go" style="margin-top:12px">Via</button><div id="r6end" style="display:none;margin-top:10px"><label>Metri percorsi</label><input type="number" inputmode="numeric" id="r6m"><button class="btn" id="r6ok" style="margin-top:8px">${I('check')} Usa questo risultato</button></div>`,(el,close)=>{
+  const q=x=>el.querySelector(x);const stop=()=>{clearInterval(iv);try{if(watch!=null)navigator.geolocation.clearWatch(watch)}catch(e){}keepAwake(false)};
+  el.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{if(started)return;gps=b.dataset.g==='1';el.querySelectorAll('[data-g]').forEach(x=>x.classList.toggle('on',x===b))});
+  q('#r6go').onclick=()=>{if(started)return;started=true;q('#r6go').style.display='none';keepAwake(true);COACH.say('Via! Sei minuti, ritmo costante.',true);beep(1320,0.25);
+   if(gps){try{watch=navigator.geolocation.watchPosition(p=>{const c=p.coords;if(c.accuracy>35)return;const pt=[c.latitude,c.longitude];if(pos){const d=haver(pos,pt);if(d>2&&d<60)dist+=d;else if(d<=2)return}pos=pt},()=>{q('#r6d').textContent='GPS non disponibile: inserisci i metri a mano'},{enableHighAccuracy:true,maximumAge:2000,timeout:20000})}catch(e){}}
+   const t0=performance.now();iv=setInterval(()=>{if(!document.body.contains(el)){stop();return}const r=Math.max(0,360-Math.floor((performance.now()-t0)/1000));if(r!==rem){rem=r;q('#r6t').textContent=mmss(r);if(gps)q('#r6d').textContent=Math.round(dist)+' m';if(r===180)COACH.say('Metà. Tieni il ritmo.');if(r===60)COACH.say('Ultimo minuto, spingi!');if(r<=3&&r>0)beep(880,0.1)}
+    if(r===0){stop();beep(1320,0.4);COACH.say('Stop! Fermati dove sei.',true);q('#r6end').style.display='';if(gps&&dist>50)q('#r6m').value=Math.round(dist/10)*10}},200)};
+  q('#r6ok').onclick=()=>{const v=+q('#r6m').value;if(!v){toast('Inserisci i metri');return}stop();close();cb(v)};
+  return stop})}
+
 /* ---------- NON CE LA FACCIO OGGI ---------- */
 function cantSheet(fc){const d=today(),mon=monday(d),L=String(fc).slice(4);
  S.skip=S.skip||{};const had=S.skip[d];S.skip[d]=1;const pw=planWeek(mon);if(!had)delete S.skip[d];
@@ -1350,7 +1424,7 @@ function jollyCheck(){const a=activeDays();const y=addD(today(),-1),yy=addD(toda
 function jollyEarn(){const st=streak();if(st>0&&st%7===0&&S.jolly<2&&!(S.jollyEarned||[]).includes(today())){S.jolly++;S.jollyEarned=[...(S.jollyEarned||[]),today()].slice(-10);save();return true}return false}
 function bestStreak(){const a=[...activeDays()].sort();let best=0,cur=0,prev=null;for(const d of a){cur=(prev&&diffD(prev,d)===1)?cur+1:1;best=Math.max(best,cur);prev=d}return best}
 function monthSolid(){const a=activeDays();let runs=0;let mon=monday(today());for(let i=0;i<60;i++){let c=0;for(let j=0;j<7;j++)if(a.has(addD(mon,j)))c++;if(c>=2){runs++;if(runs>=4)return true}else if(i>0)runs=0;mon=addD(mon,-7)}return false}
-const MEDALS=[
+const MEDALS=[['ath1','Atleta misurato','Primi test atletici',()=>(S.ath||[]).length>=1],['ath2','Più veloce','Migliorato lo scatto nei test',()=>{const a=(S.ath||[]).filter(x=>x.sprint);return a.length>1&&a[a.length-1].sprint<a[0].sprint}],
  ['w1','Primo allenamento','Hai iniziato',()=>S.wk.length>=1],['w5','5 allenamenti','Si comincia a vedere',()=>S.wk.length>=5],['w25','25 allenamenti','Costanza vera',()=>S.wk.length>=25],['w50','50 allenamenti','Showtime',()=>S.wk.length>=50],['w100','100 allenamenti','Leggenda',()=>S.wk.length>=100],
  ['s3','3 giorni di fila','Streak accesa',()=>bestStreak()>=3],['s7','7 giorni di fila','Settimana perfetta',()=>bestStreak()>=7],['s14','14 giorni di fila','Inarrestabile',()=>bestStreak()>=14],
  ['mese','Primo mese senza saltare','4 settimane con almeno 2 attività',monthSolid],
@@ -1505,6 +1579,8 @@ function vHome(m){
  m.innerHTML=`<div class="row between"><span class="mu">${GGL[dIdx(d)]} ${fmt(d)}</span><div class="row"><span class="gold row" style="gap:4px">${I('flame')} ${st} ${st===1?'giorno':'giorni'}</span><button class="chip" id="set" aria-label="Impostazioni" style="padding:7px">${I('set')}</button></div></div>
  <h1 style="margin-top:8px">Ciao ${esc(S.name)}, ${G('pronto','pronta')} a muoverti?</h1>
  <div class="chips" style="margin-bottom:12px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px">${S.locs.map(l=>`<button class="chip ${S.loc===l.id?'on':''}" data-loc="${l.id}" style="flex:none">${I(l.ic||'home')} ${esc(l.n)}</button>`).join('')}<button class="chip" id="plm" style="flex:none" aria-label="Gestisci luoghi">${I('plus')} Luoghi</button></div>
+ ${(()=>{const ws=weekSumDue();return ws?`<button class="card row" id="wsum" data-mon="${ws}" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px solid var(--gold)">${I('medal','ic gold')}<div style="flex:1"><b>Riepilogo della settimana</b><div class="small mu">Com'è andata e cosa fare la prossima</div></div>${I('chev')}</button>`:''})()}
+ ${athDue()&&S.wk.length>=1?`<button class="card row" id="athq" style="width:100%;border:0;color:var(--tx);text-align:left">${I('bolt','ic gold')}<div style="flex:1"><b>${athLast()?'Rifai i test atletici':'Test atletici di partenza'}</b><div class="small mu">Salto, scatto 20 m, navetta, corsa 6′ · 20 minuti</div></div>${I('chev')}</button>`:''}
  ${(()=>{const mon=monday(d),nx=addD(mon,7);const WP=S.wplan||{};const tgt=!WP[mon]?mon:(dIdx(d)>=5&&!WP[nx]?nx:null);if(!tgt)return '';return `<button class="card row" id="setw" data-mon="${tgt}" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('cal','ic gold')}<div style="flex:1"><b>${patSh(tgt)?'Conferma':'Pianifica'} ${tgt===mon?'la settimana':'la prossima settimana'}</b><div class="small mu">${patSh(tgt)?'Turni già inseriti dal tuo schema: controlla e salva':'Lavoro'+(SP().none?'':', '+esc(SP().w))+', allenamenti con orario e consigli'}</div></div>${I('chev')}</button>`})()}
  ${(S.deloadUntil&&today()<=S.deloadUntil)?`<div class="note bad">${I('info','ic')} Settimana leggera fino al ${fmt(S.deloadUntil)}: meno serie, recuperi meglio.</div>`:boostOn()?`<div class="note okk">${I('bolt','ic')} Acceleratore attivo fino al ${fmt(S.boostUntil)}: sali di livello prima.</div>`:''}
  <div class="hero">
@@ -1563,6 +1639,8 @@ function vHome(m){
  if($('#chsh'))$('#chsh').onclick=chShare;
  if($('#weigh'))$('#weigh').onclick=measForm;
  if($('#runq'))$('#runq').onclick=runSheet;
+ if($('#wsum'))$('#wsum').onclick=()=>weekSheet($('#wsum').dataset.mon);
+ if($('#athq'))$('#athq').onclick=athSheet;
  if($('#injq'))$('#injq').onclick=()=>{homeFocus='antinf';durTouched=true;homeDur=10;render();scrollTo(0,0);toast('Anti-infortunio pronto: tocca Inizia')};
  $('#chq').onclick=()=>{sheet(chCard()+'<div class="hint">Ogni lunedì arriva una sfida nuova. Completala per 50 monete.</div>',(e,c)=>{e.querySelector('#chsh').onclick=chShare})};
  if($('#inst'))$('#inst').onclick=()=>sheet(`<h2 style="margin-top:0">Mettila sul telefono</h2><div class="small mu" style="line-height:1.6">Funziona anche offline. <b>iPhone (Safari)</b>: tasto Condividi → "Aggiungi alla schermata Home". <b>Android (Chrome)</b>: menu ⋮ → "Aggiungi a schermata Home". Avrai l'icona Showtime Fit come un'app.</div><button class="btn sec" id="dism" style="margin-top:12px">Fatto, non mostrarlo più</button>`,(e,c)=>{e.querySelector('#dism').onclick=()=>{S.dismissInstall=true;save();c();render()}});
@@ -1766,6 +1844,7 @@ function vWeek(m){
  m.innerHTML=`<h1>La tua settimana</h1>
  <div class="row between card"><button class="chip" id="wp" aria-label="Settimana prima">${I('chevl')}</button><div style="text-align:center"><b>${fmt(mon)} – ${fmt(days[6])}</b><div class="small dim">${WEEKOFF===0?'Questa settimana':WEEKOFF===1?'Prossima settimana':WEEKOFF===-1?'Settimana scorsa':''}</div></div><button class="chip" id="wn" aria-label="Settimana dopo">${I('chev')}</button></div>
  <div class="card small" style="padding:10px 12px"><b class="gold">Settimana ${progWeek()} di 8 · ${phaseOf().n}</b><div class="mu">${phaseOf().d}</div></div>
+ ${mon<=today()?`<button class="btn sec" id="wsum2" style="margin-bottom:8px">${I('medal')} Riepilogo di questa settimana</button>`:''}
  <button class="btn" id="wplan" style="margin-bottom:10px">${I('cal')} ${(S.wplan||{})[mon]?'Modifica il piano della settimana':'Pianifica la settimana'}</button>
  <p class="small mu" style="${SP().none?'display:none':''}">Tocca il pallone nei giorni in cui fai ${esc(SP().w)} (gara o allenamento). Le sessioni A, B e C si spostano da sole.</p>
  ${days.map((d,i)=>{const pl=planFor(d);const on=set.includes(i);const done=S.wk.filter(w=>w.date===d);const cl=S.calLog.find(c=>c.date===d);
@@ -1781,6 +1860,7 @@ function vWeek(m){
  if($('#addc'))$('#addc').onclick=()=>calcioForm();
  $('#ics').onclick=()=>(S.wplan||{})[mon]?icsWeek(mon):icsSheet(mon);
  $('#wplan').onclick=()=>planWizard(mon);
+ if($('#wsum2'))$('#wsum2').onclick=()=>weekSheet(mon);
  m.querySelectorAll('[data-delc]').forEach(b=>b.onclick=()=>confirmBox('Eliminare questa sessione?','Elimina',()=>{S.calLog=S.calLog.filter(c=>c.id!==b.dataset.delc);save();render()}));
 }
 function icsSheet(mon){
@@ -1911,6 +1991,7 @@ function vProg(m){
  <div class="grid2"><div class="stat"><span class="small mu">Record piegamenti</span><b>${rec}</b></div><div class="stat"><span class="small mu">Plank migliore</span><b>${mmss(pk)}</b></div><div class="stat"><span class="small mu">Allenamenti</span><b style="color:#fff">${tot}</b></div><div class="stat"><span class="small mu">Minuti totali</span><b style="color:#fff">${mins}</b></div></div>
  ${rewardsCard()}
  ${chCard()}
+ <h2>Test atletici</h2><div class="card">${(()=>{const a=(S.ath||[]).slice().sort((x,y)=>x.date.localeCompare(y.date));if(!a.length)return '<div class="small mu">Nessun test ancora. Ogni 4 settimane misuri salto, scatto, navetta e resistenza.</div>';const l=a[a.length-1],f=a.length>1?a[0]:null;return ATH.map(([k,n,u,hb])=>`<div class="mrow"><span>${n}</span><b>${athFmt(k,l[k])} ${l[k]!=null?u:''} ${f?athDelta(k,l[k],f[k],hb):''}</b></div>`).join('')+`<div class="small dim" style="margin-top:6px">Ultimo test: ${fmt(l.date)}${f?' · confronto con il primo ('+fmt(f.date)+')':''}${athDue()?' · è ora di rifarli':' · prossimo dal '+fmt(addD(l.date,28))}</div>`})()}<button class="btn ${athDue()?'':'sec'}" id="athp" style="margin-top:10px">${I('bolt')} ${athDue()?'Fai i test':'Rifai o completa i test'}</button></div>
  <button class="btn sec" id="rep" style="margin-bottom:6px">${I('medal')} Resoconto del ciclo</button>
  <h2>Programma 8 settimane</h2><div class="card"><div style="display:flex;gap:3px">${[1,2,3,4,5,6,7,8].map(w=>`<div style="flex:1;height:10px;border-radius:5px;background:${phaseOf(w).c};opacity:${w===progWeek()?1:0.35};${w===progWeek()?'outline:2px solid #fff':''}"></div>`).join('')}</div><div class="small" style="margin-top:8px"><b style="color:${phaseOf().c}">Settimana ${progWeek()} · ${phaseOf().n}</b> <span class="mu">${phaseOf().d}</span></div></div>
  <h2>Muscoli della settimana</h2><div class="card"><div class="small mu" style="margin-bottom:8px">Serie di Massa e tono · obiettivo 10-20 per muscolo</div>${muscleBars(weekSets())}</div>
@@ -1924,6 +2005,7 @@ function vProg(m){
  m.querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{PROGM=b.dataset.pm;render()});
  $('#rt').onclick=()=>testView($('#main'),false);
  $('#shop').onclick=shopSheet;if($('#chsh'))$('#chsh').onclick=chShare;
+ $('#athp').onclick=athSheet;
  $('#rep').onclick=()=>reportSheet(progWeek()===1&&cycleInfo(1)?1:0);
 }
 
