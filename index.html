@@ -149,7 +149,7 @@ check:'<path d="M5 12l5 5l10 -10"/>',
 plus:'<path d="M12 5l0 14"/><path d="M5 12l14 0"/>',
 flame:'<path d="M12 12c2 -2.96 0 -7 -1 -8c0 3.038 -1.773 4.741 -3 6c-1.226 1.26 -2 3.24 -2 5a6 6 0 1 0 12 0c0 -1.532 -1.056 -3.94 -2 -5c-1.786 3 -2.791 3 -4 2z"/>',
 wheel:'<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M12 14l0 7"/><path d="M10 12l-6.75 -2"/><path d="M14 12l6.75 -2"/>',
-run:'<path d="M13 4m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M4 17l5 1l.75 -1.5"/><path d="M15 21l0 -4l-4 -3l1 -6"/><path d="M7 12l0 -3l5 -1l3 3l3 1"/>',ball:'<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 7l4.76 3.45l-1.76 5.55h-6l-1.76 -5.55z"/><path d="M12 7v-4m3 13l2.5 3m-.74 -8.55l3.74 -1.45m-11.44 7.05l-2.56 2.95m.74 -8.55l-3.74 -1.45"/>',
+heart:'<path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/>',run:'<path d="M13 4m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M4 17l5 1l.75 -1.5"/><path d="M15 21l0 -4l-4 -3l1 -6"/><path d="M7 12l0 -3l5 -1l3 3l3 1"/>',ball:'<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 7l4.76 3.45l-1.76 5.55h-6l-1.76 -5.55z"/><path d="M12 7v-4m3 13l2.5 3m-.74 -8.55l3.74 -1.45m-11.44 7.05l-2.56 2.95m.74 -8.55l-3.74 -1.45"/>',
 pin:'<path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"/>',
 clock:'<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 7v5l3 3"/>',
 medal:'<path d="M12 4v3m-4 -3v6m8 -6v6"/><path d="M12 18.5l-3 1.5l.5 -3.5l-2 -2l3 -.5l1.5 -3l1.5 3l3 .5l-2 2l.5 3.5z"/>',
@@ -1053,6 +1053,43 @@ function planWeek(mon){
  return res;
 }
 
+/* ---------- FASCIA CARDIO ---------- */
+const HR={dev:null,ch:null,bpm:0,t:0,log:[],subs:[],busy:false,
+ ok(){return !!(navigator.bluetooth&&navigator.bluetooth.requestDevice)},
+ live(){return this.bpm>0&&Date.now()-this.t<6000},
+ max(){return (S.prof&&S.prof.hrmax)||(S.prof&&S.prof.age?Math.round(208-0.7*S.prof.age):190)},
+ zone(b=this.bpm){const p=b/this.max();return p<0.6?1:p<0.7?2:p<0.8?3:p<0.9?4:5},
+ zc(z){return ['#8FB6F0','#8FB6F0','#97C459','#FDB927','#F0997B','#E24B4A'][z]},
+ zn(z){return ['','Riposo','Facile','Aerobica','Soglia','Massimo'][z]},
+ emit(){this.subs.forEach(f=>{try{f()}catch(e){}})},
+ on(v){const d=v.target.value;const fl=d.getUint8(0);const b=fl&1?d.getUint16(1,true):d.getUint8(1);if(b>25&&b<240){this.bpm=b;this.t=Date.now();this.log.push(b);if(this.log.length>20000)this.log.shift()}this.emit()},
+ async connect(){if(!this.ok()){hrHelp();return false}if(this.busy)return false;this.busy=true;
+  try{const dev=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]});this.dev=dev;S.hrName=dev.name||'Fascia cardio';save();
+   dev.addEventListener('gattserverdisconnected',()=>{this.ch=null;this.emit();setTimeout(()=>{if(this.dev===dev&&!this.ch)this.attach(dev).catch(()=>{})},1500)});
+   await this.attach(dev);toast('Collegata: '+S.hrName);COACH.say('Fascia collegata',true);return true}
+  catch(e){if(!(e&&e.name==='NotFoundError'))toast('Non riesco a collegare la fascia: accendila e riprova');return false}finally{this.busy=false;this.emit()}},
+ async attach(dev){const g=await dev.gatt.connect();const sv=await g.getPrimaryService('heart_rate');const ch=await sv.getCharacteristic('heart_rate_measurement');ch.addEventListener('characteristicvaluechanged',e=>this.on(e));await ch.startNotifications();this.ch=ch;this.emit()},
+ off(){try{if(this.dev&&this.dev.gatt.connected)this.dev.gatt.disconnect()}catch(e){}this.dev=null;this.ch=null;this.bpm=0;this.emit()},
+ mark(){return this.log.length},
+ stats(from){const a=this.log.slice(from);if(a.length<5)return null;return{avg:Math.round(a.reduce((x,y)=>x+y,0)/a.length),max:Math.max(...a)}}};
+function hrHelp(){const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+ sheet(`<h2 style="margin-top:0">${I('heart','ic gold')} Fascia cardio</h2>${ios?`<p class="small mu">Su iPhone Safari non permette ai siti di usare il Bluetooth. Serve un browser che lo supporta:</p>
+ <div class="card small" style="padding:10px 12px"><b class="gold">1.</b> Scarica gratis <b>Bluefy – Web BLE Browser</b> dall'App Store</div>
+ <div class="card small" style="padding:10px 12px"><b class="gold">2.</b> Qui: Impostazioni → <b>Copia come testo</b></div>
+ <div class="card small" style="padding:10px 12px"><b class="gold">3.</b> In Bluefy apri <b>snow742.github.io/showtime-fit</b> → Impostazioni → <b>Incolla testo</b></div>
+ <div class="card small" style="padding:10px 12px"><b class="gold">4.</b> Tocca ${I('heart')} durante la corsa o l'allenamento e scegli la fascia</div>
+ <div class="hint">Bluefy tiene i dati separati da questa app: dopo qualche allenamento rifai Copia → Incolla al contrario.</div>`:`<p class="small mu">Questo browser non supporta il Bluetooth. Su Android apri l'app con Chrome.</p>`}<button class="btn" id="hrok" style="margin-top:8px">Ho capito</button>`,(el,c)=>el.querySelector('#hrok').onclick=c)}
+function hrChip(id){const z=HR.live()?HR.zone():0;return `<button class="chip" id="${id}" aria-label="Fascia cardio" style="padding:7px 9px;${HR.live()?'color:'+HR.zc(z):''}">${I('heart')}${HR.live()?' <b>'+HR.bpm+'</b>':HR.ch?' …':''}</button>`}
+function hrSheet(){sheet(`<div id="hrs"></div>`,(el,close)=>{const draw=()=>{if(!document.body.contains(el)){HR.subs=HR.subs.filter(f=>f!==draw);return}const z=HR.live()?HR.zone():0;
+  el.querySelector('#hrs').innerHTML=`<h2 style="margin-top:0">${I('heart','ic gold')} Fascia cardio</h2>
+  ${HR.ch?`<div style="text-align:center;margin:6px 0 10px"><div style="font:700 64px 'Barlow Condensed',sans-serif;color:${HR.zc(z)}">${HR.live()?HR.bpm:'…'}</div><div class="small mu">${esc(S.hrName||'')} · ${HR.live()?'Zona '+z+' · '+HR.zn(z):'aspetto il segnale'}</div></div><button class="btn sec" id="hroff">Scollega</button>`:`<p class="small mu">Funziona con le fasce da braccio o da petto Bluetooth (Coospo, Polar, Wahoo, Garmin…). Accendila, indossala e tocca Collega.</p><button class="btn" id="hrgo">${I('heart')} Collega la fascia</button>`}
+  <label>Frequenza massima</label><div class="row" style="gap:8px"><input type="number" inputmode="numeric" id="hrm" value="${HR.max()}" style="width:100px"><span class="small mu">${S.prof&&S.prof.hrmax?'impostata da te':S.prof&&S.prof.age?'stimata dall\'età':'metti l\'età nel profilo per stimarla'}</span></div>
+  <div class="small mu" style="margin-top:8px;line-height:1.7">${[1,2,3,4,5].map(k=>`<span style="color:${HR.zc(k)}">●</span> Zona ${k} ${HR.zn(k)}: ${Math.round(HR.max()*[0,0.5,0.6,0.7,0.8,0.9][k])}-${Math.round(HR.max()*[0,0.6,0.7,0.8,0.9,1][k])}`).join('<br>')}</div>`;
+  const q=x=>el.querySelector(x);if(q('#hrgo'))q('#hrgo').onclick=()=>HR.connect();if(q('#hroff'))q('#hroff').onclick=()=>HR.off();
+  q('#hrm').onchange=e=>{const v=+e.target.value;S.prof=S.prof||{};if(v>=120&&v<=230){S.prof.hrmax=v;save()}else{delete S.prof.hrmax;save()}draw()}};
+ HR.subs.push(draw);draw()})}
+function hrBind(scope,id){const b=scope.querySelector('#'+id);if(!b)return;b.onclick=()=>HR.ch?hrSheet():HR.connect();const up=()=>{const x=scope.querySelector('#'+id);if(!x||!document.body.contains(x)){HR.subs=HR.subs.filter(f=>f!==up);return}x.outerHTML=hrChip(id);const n=scope.querySelector('#'+id);if(n)n.onclick=()=>HR.ch?hrSheet():HR.connect()};HR.subs.push(up)}
+
 /* ---------- ANTI-INFORTUNIO ---------- */
 function injLevel(){const w=progWeek();return w<=2?0:w===6?0:w<=5?1:2}
 const INJ=[['nordic','ponteuna',[[2,4],[3,5],[3,6]]],['copenhagen','ponte',[[2,15],[3,20],[3,25]]],['equilibrio',null,[[2,30],[3,30],[3,40]]],['atterraggio',null,[[2,5],[2,6],[3,6]]]];
@@ -1077,18 +1114,19 @@ function runSheet(){const t=today(),tom=addD(t,1);let where=S.runWhere||'strada'
   <div class="small mu" style="margin:-4px 0 10px">${where==='strada'?'Uso il GPS per chilometri e passo':'Solo a tempo, il GPS resta spento'} · settimana ${progWeek()} di 8</div>
   ${warn?`<div class="note bad" style="margin-bottom:10px">${I('info','ic')} ${esc(warn)}</div>`:''}
   ${Object.entries(RUNS).filter(([k,r])=>r.where==='both'||r.where===where).map(([k,r])=>{const sg=r.build(L);const min=Math.round(sg.reduce((a,x)=>a+x[1],0)/60);const bad=(isCalcio(t)||isCalcio(tom))&&k!=='fondo';return `<button class="card row" data-run="${k}" style="width:100%;border:0;color:var(--tx);text-align:left;margin-bottom:8px;${bad?'opacity:.55':''}">${I(r.ic,'ic gold')}<div style="flex:1;min-width:0"><b>${r.n}</b><div class="small mu">${r.d} · ${esc(runDesc(k,L))}</div></div><span class="gold" style="font-weight:700">${min}′</span></button>`}).join('')}
-  ${(S.runs||[]).length?`<div class="small gold" style="margin:12px 0 4px">Ultime corse</div>${S.runs.slice(-4).reverse().map(r=>`<div class="mrow"><span>${fmt(r.date)} · ${esc(RUNS[r.type]?RUNS[r.type].n:r.type)}</span><b>${r.km?String(r.km).replace('.',',')+' km · ':''}${r.min}′</b></div>`).join('')}`:''}
+  ${(S.runs||[]).length?`<div class="small gold" style="margin:12px 0 4px">Ultime corse</div>${S.runs.slice(-4).reverse().map(r=>`<div class="mrow"><span>${fmt(r.date)} · ${esc(RUNS[r.type]?RUNS[r.type].n:r.type)}</span><b>${r.km?String(r.km).replace('.',',')+' km · ':''}${r.min}′${r.hr?' · '+r.hr.avg+' bpm':''}</b></div>`).join('')}`:''}
+  <button class="btn ghost" id="rshr" style="margin-top:6px">${I('heart')} ${HR.ch?'Fascia collegata · '+(HR.live()?HR.bpm+' bpm':'…'):'Collega la fascia cardio'}</button>
   <div class="hint">Primi 5 minuti sempre piano. Se senti tirare dietro la coscia, fermati e cammina.</div>`;
   el.querySelectorAll('[data-wh]').forEach(b=>b.onclick=()=>{where=b.dataset.wh;S.runWhere=where;save();draw()});
-  el.querySelectorAll('[data-run]').forEach(b=>b.onclick=()=>{close();runPlayer(b.dataset.run,where==='strada')})};draw()})}
+  el.querySelectorAll('[data-run]').forEach(b=>b.onclick=()=>{close();runPlayer(b.dataset.run,where==='strada')});el.querySelector('#rshr').onclick=()=>HR.ch?hrSheet():HR.connect().then(draw)};draw()})}
 function runDesc(k,L){return {ripetute:[6,8,10][L]+' × 30″ forte',intermit:'2 blocchi da '+[8,10,12][L]+' × 15″',fondo:[20,25,30][L]+'′ di corsa lenta',navette:[6,8,10][L]+' navette'}[k]}
 function haver(a,b){const R=6371e3,r=x=>x*Math.PI/180;const dl=r(b[0]-a[0]),dn=r(b[1]-a[1]);const h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 let RP=null;
 function runPlayer(type,gps){unlockAudio();keepAwake(true);COACH.prime();const segs=RUNS[type].build(runLv());const tot=segs.reduce((a,x)=>a+x[1],0);
  const el=document.createElement('div');el.className='player';el.style.zoom=S.fontK||1;document.body.appendChild(el);
- RP={type,segs,i:0,rem:segs[0][1],el,paused:false,last:performance.now(),el,elapsed:0,dist:0,pos:null,watch:null,gps,gpsMsg:gps?'Cerco il GPS…':'',lastBeep:-1,half:false,lastKm:0};
+ RP={hr0:HR.mark(),zHi:0,type,segs,i:0,rem:segs[0][1],el,paused:false,last:performance.now(),el,elapsed:0,dist:0,pos:null,watch:null,gps,gpsMsg:gps?'Cerco il GPS…':'',lastBeep:-1,half:false,lastKm:0};
  const runBack=()=>{if(!RP)return;RP.layer=openLayer(runBack);if(document.querySelector('.sheet-bg'))return;el.querySelector('#rx').click()};RP.layer=openLayer(runBack);
- el.innerHTML=`<div class="row between"><button class="chip" id="rx" aria-label="Chiudi">${I('x')}</button><span class="small mu" style="flex:1;text-align:center">${esc(RUNS[type].n)}</span><button class="chip" id="rv" aria-label="Voce" style="padding:7px">${I(S.set.voice!==false?'vol':'voloff')}</button></div>
+ el.innerHTML=`<div class="row between"><button class="chip" id="rx" aria-label="Chiudi">${I('x')}</button><span class="small mu" style="flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(RUNS[type].n)}</span>${hrChip('rhr')}<button class="chip" id="rv" aria-label="Voce" style="padding:7px">${I(S.set.voice!==false?'vol':'voloff')}</button></div>
  <div class="pbar" style="margin:10px 0"><i id="rpr"></i></div>
  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:6px;min-height:0">
   <div id="rk" style="font:700 30px 'Barlow Condensed',sans-serif;letter-spacing:1px"></div>
@@ -1100,7 +1138,7 @@ function runPlayer(type,gps){unlockAudio();keepAwake(true);COACH.prime();const s
   <div class="card" style="padding:8px 4px;margin:0"><div class="small dim">Tempo</div><b id="rs1">0:00</b></div>
   <div class="card" style="padding:8px 4px;margin:0"><div class="small dim">Km</div><b id="rs2">${gps?'0,00':'–'}</b></div>
   <div class="card" style="padding:8px 4px;margin:0"><div class="small dim">Passo</div><b id="rs3">–</b></div></div>
- <div id="rg" class="small dim" style="text-align:center;min-height:18px"></div>
+ <div id="rz" style="text-align:center;font-weight:700;min-height:22px"></div><div id="rg" class="small dim" style="text-align:center;min-height:18px"></div>
  <div class="ctrl" style="margin-top:6px"><button id="rprev" aria-label="Indietro">${I('prev')}</button><button class="big" id="rp" aria-label="Pausa">${I('pause')}</button><button id="rnx" aria-label="Avanti">${I('next')}</button></div>`;
  const q=x=>el.querySelector(x);
  q('#rx').onclick=()=>confirmBox('Vuoi finire la corsa?','Finisci',()=>{if(RP.elapsed>180)runFinish();else runClose()});
@@ -1108,7 +1146,7 @@ function runPlayer(type,gps){unlockAudio();keepAwake(true);COACH.prime();const s
  q('#rnx').onclick=()=>runGo(RP.i+1);q('#rprev').onclick=()=>runGo(Math.max(0,RP.i-1));
  q('#rv').onclick=e=>{S.set.voice=S.set.voice===false;save();e.currentTarget.innerHTML=I(S.set.voice!==false?'vol':'voloff');if(S.set.voice===false)COACH.stop()};
  if(gps){try{if(!navigator.geolocation)throw 0;RP.watch=navigator.geolocation.watchPosition(p=>{if(!RP)return;const c=p.coords;if(c.accuracy>35){RP.gpsMsg='GPS debole ('+Math.round(c.accuracy)+' m)';return}RP.gpsMsg='GPS ok';const pt=[c.latitude,c.longitude];if(RP.pos&&!RP.paused){const d=haver(RP.pos,pt);if(d>2&&d<60)RP.dist+=d;else if(d<=2)return}RP.pos=pt},err=>{if(RP)RP.gpsMsg=err&&err.code===1?'Permesso posizione negato: vado solo a tempo':'GPS non disponibile: vado solo a tempo'},{enableHighAccuracy:true,maximumAge:2000,timeout:20000})}catch(e){RP.gpsMsg='GPS non disponibile: vado solo a tempo'}}
- runGo(0);RP.timer=setInterval(runTick,200)}
+ hrBind(el,'rhr');runGo(0);RP.timer=setInterval(runTick,200)}
 function runGo(i){if(!RP)return;if(i>=RP.segs.length){runFinish();return}RP.i=i;const [k,sec,lab]=RP.segs[i];RP.rem=sec;RP.lastBeep=-1;RP.half=false;
  const nx=RP.segs[i+1];const q=x=>RP.el.querySelector(x);q('#rk').textContent=RUNK[k][0];q('#rk').style.color=RUNK[k][1];q('#rl').textContent=lab;q('#rn').textContent=nx?'Poi: '+nx[2]+' · '+(nx[1]>=60?Math.round(nx[1]/60)+'′':nx[1]+'″'):'Ultimo tratto';
  const say={warm:'Riscaldamento. '+lab+', '+Math.round(sec/60)+' minuti, tranquillo.',hard:'Via! Forte per '+sec+' secondi!',easy:k==='easy'&&sec>=300?'Corsa lenta per '+Math.round(sec/60)+' minuti. Devi riuscire a parlare.':'Piano.',walk:'Cammina e recupera.',cool:'Defaticamento. Bravo, rallenta piano piano.'}[k];
@@ -1119,19 +1157,21 @@ function runTick(){if(!RP)return;const now=performance.now(),dt=(now-RP.last)/10
  if(k==='hard'&&!RP.half&&RP.rem<sec/2&&sec>=20){RP.half=true;COACH.say(COACH.hype())}
  if(k==='easy'&&sec>=300&&Math.floor(RP.elapsed)%300===0&&Math.floor(RP.elapsed)!==RP.lastMin){RP.lastMin=Math.floor(RP.elapsed);COACH.say('Mancano '+Math.round(RP.rem/60)+' minuti. Respira, spalle rilassate.')}
  const km=Math.floor(RP.dist/1000);if(km>RP.lastKm){RP.lastKm=km;COACH.say(km+' chilometr'+(km===1?'o':'i')+'. Passo '+paceTxt().replace(':',' e ')+' al chilometro.')}
+ if(HR.live()){const z=HR.zone();if(k==='easy'&&sec>=300&&z>=4){RP.zHi+=dt;if(RP.zHi>25){RP.zHi=-60;COACH.say('Rallenta un po\': il fondo lento si fa in zona 2 o 3.')}}else if(RP.zHi>0)RP.zHi=0;
+  if(k==='walk'&&!RP.recSaid&&HR.bpm<HR.max()*0.7&&RP.rem>8){RP.recSaid=RP.i;COACH.say('Cuore recuperato.')}if(RP.recSaid!==undefined&&RP.recSaid!==RP.i&&k!=='walk')RP.recSaid=undefined}
  if(RP.rem<=0){runGo(RP.i+1);return}runRender()}
 function paceTxt(){if(!RP||RP.dist<150)return '–';const p=RP.elapsed/(RP.dist/1000);return Math.floor(p/60)+':'+String(Math.round(p%60)).padStart(2,'0')}
 function runRender(){if(!RP)return;const q=x=>RP.el.querySelector(x);q('#rt').textContent=mmss(Math.max(0,Math.ceil(RP.rem)));
  const tot=RP.segs.reduce((a,x)=>a+x[1],0),done=RP.segs.slice(0,RP.i).reduce((a,x)=>a+x[1],0)+RP.segs[RP.i][1]-Math.max(0,RP.rem);q('#rpr').style.width=Math.min(100,done/tot*100)+'%';
- q('#rs1').textContent=mmss(Math.floor(RP.elapsed));if(RP.gps){q('#rs2').textContent=(RP.dist/1000).toFixed(2).replace('.',',');q('#rs3').textContent=paceTxt()}q('#rg').textContent=RP.gpsMsg+(RP.paused?' · in pausa':'')}
+ q('#rs1').textContent=mmss(Math.floor(RP.elapsed));if(RP.gps){q('#rs2').textContent=(RP.dist/1000).toFixed(2).replace('.',',');q('#rs3').textContent=paceTxt()}q('#rg').textContent=RP.gpsMsg+(RP.paused?' · in pausa':'');const rz=q('#rz');if(HR.live()){const z=HR.zone();rz.innerHTML=`<span style="color:${HR.zc(z)}">${I('heart','ic')} ${HR.bpm} · Zona ${z} ${HR.zn(z)}</span>`}else rz.textContent=HR.ch?'Fascia collegata, aspetto il segnale…':''}
 function runClose(){if(!RP)return;try{if(RP.watch!=null)navigator.geolocation.clearWatch(RP.watch)}catch(e){}clearInterval(RP.timer);COACH.stop();if(RP.layer)closeLayer(RP.layer);RP.el.remove();RP=null;keepAwake(false);render()}
 function runFinish(){if(!RP)return;clearInterval(RP.timer);try{if(RP.watch!=null)navigator.geolocation.clearWatch(RP.watch)}catch(e){}COACH.say('Corsa finita. Grande lavoro!',true);
- const min=Math.max(1,Math.round(RP.elapsed/60)),km=RP.gps&&RP.dist>200?Math.round(RP.dist/10)/100:0,pace=km?paceTxt():'';const type=RP.type;let rpe=6;
- RP.el.innerHTML=`<div style="margin:auto;width:100%;text-align:center"><div class="gold" style="font:700 20px 'Barlow Condensed',sans-serif">CORSA COMPLETATA</div><div style="font:700 52px 'Barlow Condensed',sans-serif">${min} min</div><p class="mu">${esc(RUNS[type].n)}${km?' · '+String(km).replace('.',',')+' km · '+pace+' /km':''}</p>
+ const hs=HR.stats(RP.hr0);const min=Math.max(1,Math.round(RP.elapsed/60)),km=RP.gps&&RP.dist>200?Math.round(RP.dist/10)/100:0,pace=km?paceTxt():'';const type=RP.type;let rpe=6;
+ RP.el.innerHTML=`<div style="margin:auto;width:100%;text-align:center"><div class="gold" style="font:700 20px 'Barlow Condensed',sans-serif">CORSA COMPLETATA</div><div style="font:700 52px 'Barlow Condensed',sans-serif">${min} min</div><p class="mu">${esc(RUNS[type].n)}${km?' · '+String(km).replace('.',',')+' km · '+pace+' /km':''}</p>${hs?`<p style="color:#F0997B;font-weight:600">${I('heart','ic')} Media ${hs.avg} · Max ${hs.max} bpm</p>`:''}
  <label style="text-align:left">Fatica (1 = facile, 10 = al limite)</label><div class="chips" id="rrpe" style="justify-content:center">${[3,4,5,6,7,8,9].map(x=>`<button class="chip ${x===6?'on':''}" data-r="${x}" style="min-width:38px;justify-content:center">${x}</button>`).join('')}</div>
  <button class="btn" id="rfin" style="margin-top:14px">${I('check')} Salva</button></div>`;
  RP.el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{rpe=+b.dataset.r;RP.el.querySelectorAll('[data-r]').forEach(x=>x.classList.toggle('on',x===b))});
- RP.el.querySelector('#rfin').onclick=()=>{S.runs=S.runs||[];S.runs.push({id:uid(),date:today(),type,min,km,pace,rpe});S.wk.push({id:uid(),date:today(),focus:'corsa',min,loc:S.loc,rpe,kind:'run'});save();checkMedals();runClose();toast('Corsa salvata: +'+(min*2+20)+' XP')}}
+ RP.el.querySelector('#rfin').onclick=()=>{S.runs=S.runs||[];S.runs.push({id:uid(),date:today(),type,min,km,pace,rpe,hr:hs});S.wk.push({id:uid(),date:today(),focus:'corsa',min,loc:S.loc,rpe,kind:'run',hr:hs});save();checkMedals();runClose();toast('Corsa salvata: +'+(min*2+20)+' XP')}}
 
 /* ---------- PIANIFICA LA SETTIMANA ---------- */
 const SHIFTS={M:['Mattina','06:00','12:30'],P:['Pomeriggio','13:30','20:00'],S:['Sera','17:00','23:30'],N:['Notte','22:00','04:30'],G:['Giornata','09:00','17:00'],R:['Libero','','']};
@@ -1591,7 +1631,7 @@ function startPlayer(steps,meta){
  unlockAudio();keepAwake(true);COACH.prime();
  const el=document.createElement('div');el.className='player';el.style.zoom=S.fontK||1;document.body.appendChild(el);
  PL={layer:openLayer(playerBack),mass:{},steps,meta,i:0,rem:steps[0].secs,paused:false,last:performance.now(),el,start:Date.now(),lastBeep:-1,halfDone:false,worked:0};
- el.innerHTML=`<div class="row between"><button class="chip" id="px" aria-label="Chiudi">${I('x')}</button><span class="small mu" id="plab" style="flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px"></span><div class="row" style="gap:6px"><button class="chip" id="pvoice" aria-label="Voce" style="padding:7px">${I(S.set.voice!==false?'vol':'voloff')}</button>${CAM_OK?`<button class="chip" id="pcam" aria-label="Fotocamera" style="padding:7px">${I('cam')}</button>`:''}<span class="small mu" id="pcount"></span></div></div>
+ el.innerHTML=`<div class="row between"><button class="chip" id="px" aria-label="Chiudi">${I('x')}</button><span class="small mu" id="plab" style="flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px"></span><div class="row" style="gap:6px">${hrChip('phr')}<button class="chip" id="pvoice" aria-label="Voce" style="padding:7px">${I(S.set.voice!==false?'vol':'voloff')}</button>${CAM_OK?`<button class="chip" id="pcam" aria-label="Fotocamera" style="padding:7px">${I('cam')}</button>`:''}<span class="small mu" id="pcount"></span></div></div>
  <div class="pbar" style="margin:10px 0"><i id="ppr"></i></div>
  <div id="ptitle" style="font:700 28px 'Barlow Condensed',sans-serif;text-align:center"></div>
  <div id="psub" class="small gold" style="text-align:center;min-height:18px"></div>
@@ -1609,7 +1649,7 @@ function startPlayer(steps,meta){
   PL.cam=true;b.classList.add('on');toast('Carico il coach con fotocamera… la prima volta serve internet');
   try{await CAM.start();COACH.say('Fotocamera attiva. Mettiti di lato, a due metri, tutto il corpo nell\'inquadratura.',true);goStep(PL.i,true)}catch(err){PL.cam=false;b.classList.remove('on');CAM.stop();toast(err&&err.name==='NotAllowedError'?'Permesso fotocamera negato':'Coach fotocamera non disponibile ora (serve internet la prima volta)')}};
  el.querySelector('#pprev').onclick=()=>goStep(Math.max(0,PL.i-(PL.steps[PL.i].type==='work'?2:1)));
- goStep(0);PL.timer=setInterval(tickPlayer,100);
+ hrBind(el,'phr');PL.hr0=HR.mark();goStep(0);PL.timer=setInterval(tickPlayer,100);
 }
 function playerBack(){if(!PL)return;PL.layer=openLayer(playerBack);if(document.querySelector('.sheet-bg'))return;PL.el.querySelector('#px').click()}
 function goStep(i,keep){
@@ -1683,7 +1723,7 @@ function finishPlayer(partial){
  <p class="small dim">1-3 facile · 4-6 giusto · 7-8 duro · 9-10 al limite</p>
  <button class="btn" id="fin" style="margin-top:14px">Salva</button></div>`;
  let rpe=0;el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{rpe=+b.dataset.r;el.querySelectorAll('[data-r]').forEach(x=>x.classList.toggle('on',x===b))});
- el.querySelector('#fin').onclick=()=>{const x0=xpTotal(),c0=coins(),l0=lvOf(x0).lv;S.wk.push({id:uid(),date:today(),focus:meta.focus,min,loc:S.loc,rpe,kind:meta.kind,partial:!!partial});save();const nm=checkMedals();const je=jollyEarn();closePlayer();if(je)setTimeout(()=>toast('7 giorni di fila: hai guadagnato un giorno jolly!'),3200);
+ el.querySelector('#fin').onclick=()=>{const x0=xpTotal(),c0=coins(),l0=lvOf(x0).lv;S.wk.push({id:uid(),date:today(),focus:meta.focus,min,loc:S.loc,rpe,kind:meta.kind,partial:!!partial,hr:HR.stats(PL.hr0||0)});save();const nm=checkMedals();const je=jollyEarn();closePlayer();if(je)setTimeout(()=>toast('7 giorni di fila: hai guadagnato un giorno jolly!'),3200);
   const l1=lvOf(xpTotal()).lv;setTimeout(()=>{if(l1>l0){S.seenLv=l1;save();sheet(`<div style="text-align:center;padding:10px 0"><div style="font-size:56px">🏆</div><div class="gold" style="font:700 22px 'Barlow Condensed',sans-serif">LIVELLO ${l1}</div><h1 style="margin:4px 0">${esc(rankOf(l1))}</h1><p class="mu">+${xpTotal()-x0} XP · +${coins()-c0} monete. Passa dallo Spogliatoio per sbloccare temi e magliette.</p><button class="btn" id="lvok">Grande!</button></div>`,(e3,c3)=>{e3.querySelector('#lvok').onclick=c3})}else toast('+'+(xpTotal()-x0)+' XP · +'+(coins()-c0)+' monete')},2700);
   if(rpe>=9)toast('Molto duro: la prossima volta scegli la versione più facile dove serve');else if(nm.length)toast('Nuova medaglia: '+nm.join(', '));else toast('Allenamento salvato')};
 }
@@ -1909,6 +1949,7 @@ function settings(){
  <label>Voce del coach</label><div class="seg" id="svx"><button data-v="f" class="${(S.set.vsex||'f')==='f'?'on':''}">Femminile</button><button data-v="m" class="${S.set.vsex==='m'?'on':''}">Maschile</button></div><div class="hint">Dipende dalle voci italiane installate sul telefono.</div>
  <label>Livello</label><div class="seg" id="slv">${['Principiante','Intermedio','Avanzato'].map((n,i)=>`<button data-l="${i+1}" class="${S.level===i+1?'on':''}">${n}</button>`).join('')}</div>
  <label>Sport e lavoro</label><button class="btn sec" id="sprof">${esc(SP().n)} · ${esc(JB().n)}</button>
+ <label>Fascia cardio</label><button class="btn sec" id="shr">${I('heart')} ${HR.ch?esc(S.hrName||'Collegata'):S.hrName?esc(S.hrName)+' · non collegata':'Collega una fascia cardio'}</button>
  <label>Luoghi e attrezzi</label><button class="btn sec" id="sloc">${I('pin')} I tuoi luoghi (${S.locs.length})</button>
  <label>Dimensione del testo</label><div class="seg" id="sfk">${[[1,'Normale'],[1.12,'Grande'],[1.25,'Molto grande']].map(([k,n])=>`<button data-fk="${k}" class="${(S.fontK||1)===k?'on':''}">${n}</button>`).join('')}</div>
  <button class="btn ghost" id="stour" style="margin-top:10px">${I('info')} Guida dell'app</button>
@@ -1927,6 +1968,7 @@ function settings(){
   el.querySelectorAll('[data-fk]').forEach(b=>b.onclick=()=>{S.fontK=+b.dataset.fk;save();applyFont();el.querySelectorAll('[data-fk]').forEach(x=>x.classList.toggle('on',x===b))});
   el.querySelector('#stour').onclick=()=>{close();tour()};
   el.querySelector('#sloc').onclick=()=>{close();placesSheet()};
+  el.querySelector('#shr').onclick=()=>{close();HR.ok()?hrSheet():hrHelp()};
   el.querySelector('#sprof').onclick=()=>{close();const L=openLayer(()=>render());profileSetup($('#main'),false,ok=>{closeLayer(L);render();if(ok)toast('Profilo aggiornato')})};
   el.querySelector('#sv').onclick=e=>{S.set.vib=!S.set.vib;e.currentTarget.classList.toggle('on',S.set.vib);vib(100)};
   el.querySelector('#svo').onclick=e=>{S.set.voice=S.set.voice===false;e.currentTarget.classList.toggle('on',S.set.voice!==false);if(S.set.voice!==false)COACH.say('Ciao! Sono il tuo coach. Spingiamo!',true)};
