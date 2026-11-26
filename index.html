@@ -21,6 +21,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:
 body{overflow:hidden;position:fixed;inset:0}
 #app{position:absolute;inset:0;display:flex;flex-direction:column}
 main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:calc(14px + var(--st)) 16px 24px;overscroll-behavior:contain}
+#main>*,.tabs,.player>*,.sheet>*{zoom:var(--fk,1)}
 .tabs{display:flex;justify-content:space-around;background:#1B0F2E;border-top:1px solid var(--line);padding:6px 4px calc(6px + var(--sb))}
 .tabs button{flex:1;background:none;border:0;color:var(--dim);font:500 11px Barlow,sans-serif;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0}
 .tabs button svg{width:24px;height:24px}
@@ -1065,7 +1066,7 @@ function kcalEst(min,hrAvg,km){const w=bodyW()||75,a=(S.prof&&S.prof.age)||30,f=
 /* ---------- CORSA LIBERA ---------- */
 let FR=null;
 function freeRun(gps){unlockAudio();keepAwake(true);COACH.prime();
- const el=document.createElement('div');el.className='player';el.style.zoom=S.fontK||1;document.body.appendChild(el);
+ const el=document.createElement('div');el.className='player';document.body.appendChild(el);
  FR={el,gps,el0:0,elapsed:0,last:performance.now(),paused:false,dist:0,pos:null,watch:null,trk:newTrk(),splits:[],kmT0:0,kmHR:[0,0],buf:[],msg:gps?'Cerco il GPS…':'Senza GPS: tempo e battiti',said:''};
  const back=()=>{if(!FR)return;FR.layer=openLayer(back);if(document.querySelector('.sheet-bg'))return;el.querySelector('#fx').click()};FR.layer=openLayer(back);
  el.innerHTML=`<div class="row between"><button class="chip" id="fx" aria-label="Chiudi">${I('x')}</button><span class="small mu" style="flex:1;min-width:0;text-align:center">Corsa libera · ${gps?'strada':'campo'}</span>${hrChip('fhr')}<button class="chip" id="fv" aria-label="Voce" style="padding:7px">${I(S.set.voice!==false?'vol':'voloff')}</button></div>
@@ -1141,7 +1142,7 @@ function matchStart(){if(S.liveMatch){matchPlayer();return}
  <div class="card small" style="padding:10px 12px">${I('heart','ic gold')} ${HR.ch?'Fascia collegata':'Fascia non collegata: puoi collegarla anche dopo'}</div>
  <button class="btn" id="mgo">${I('play')} Fischio d'inizio</button>`,(el,close)=>el.querySelector('#mgo').onclick=()=>{S.liveMatch={t0:Date.now(),pausedMs:0,pauseAt:null,gol:0,ast:0,half:1};save();close();matchPlayer()})}
 function mElapsed(){const m=S.liveMatch;if(!m)return 0;return ((m.pauseAt||Date.now())-m.t0-m.pausedMs)/1000}
-function matchPlayer(){unlockAudio();keepAwake(true);const el=document.createElement('div');el.className='player';el.style.zoom=S.fontK||1;document.body.appendChild(el);
+function matchPlayer(){unlockAudio();keepAwake(true);const el=document.createElement('div');el.className='player';document.body.appendChild(el);
  MT={el,trk:newTrk(),lastEl:mElapsed()};const back=()=>{if(!MT)return;MT.layer=openLayer(back);if(document.querySelector('.sheet-bg'))return;el.querySelector('#mx').click()};MT.layer=openLayer(back);
  el.innerHTML=`<div class="row between"><button class="chip" id="mx" aria-label="Chiudi">${I('x')}</button><span class="small mu" style="flex:1;text-align:center">Partitella · ${esc(SP().n)}</span>${hrChip('mhr')}</div>
  <div style="text-align:center;margin-top:16px"><div id="mh" class="small gold"></div><div id="mt" style="font:700 88px 'Barlow Condensed',sans-serif;line-height:1">0:00</div><div id="mz" class="small" style="font-weight:700;min-height:20px"></div></div>
@@ -1335,7 +1336,7 @@ function runDesc(k,L){return {ripetute:[6,8,10][L]+' × 30″ forte',intermit:'2
 function haver(a,b){const R=6371e3,r=x=>x*Math.PI/180;const dl=r(b[0]-a[0]),dn=r(b[1]-a[1]);const h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 let RP=null;
 function runPlayer(type,gps){unlockAudio();keepAwake(true);COACH.prime();const segs=RUNS[type].build(runLv());const tot=segs.reduce((a,x)=>a+x[1],0);
- const el=document.createElement('div');el.className='player';el.style.zoom=S.fontK||1;document.body.appendChild(el);
+ const el=document.createElement('div');el.className='player';document.body.appendChild(el);
  RP={trk:newTrk(),hr0:HR.mark(),zHi:0,type,segs,i:0,rem:segs[0][1],el,paused:false,last:performance.now(),el,elapsed:0,dist:0,pos:null,watch:null,gps,gpsMsg:gps?'Cerco il GPS…':'',lastBeep:-1,half:false,lastKm:0};
  const runBack=()=>{if(!RP)return;RP.layer=openLayer(runBack);if(document.querySelector('.sheet-bg'))return;el.querySelector('#rx').click()};RP.layer=openLayer(runBack);
  el.innerHTML=`<div class="row between"><button class="chip" id="rx" aria-label="Chiudi">${I('x')}</button><span class="small mu" style="flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(RUNS[type].n)}</span>${hrChip('rhr')}<button class="chip" id="rv" aria-label="Voce" style="padding:7px">${I(S.set.voice!==false?'vol':'voloff')}</button></div>
@@ -1569,7 +1570,7 @@ function closeLayer(L){const i=LAYERS.indexOf(L);if(i<0)return;LAYERS.splice(i,1
 window.addEventListener('popstate',()=>{if(skipPop>0){clearTimeout(flushT);flushQ();return}const L=LAYERS.pop();if(L)L.fn()});
 let tabL=null;
 function goTab(k){if(k===TAB){render();return}if(TAB==='home'&&k!=='home'&&!tabL){tabL=openLayer(()=>{tabL=null;TAB='home';render()})}else if(k==='home'&&tabL){closeLayer(tabL);tabL=null}TAB=k;render()}
-function sheet(html,onMount){const bg=document.createElement('div');bg.className='sheet-bg';bg.innerHTML=`<div class="sheet" style="zoom:${S.fontK||1}"><button class="sx" aria-label="Chiudi">${I('x')}</button><div class="grab"></div>${html}</div>`;
+function sheet(html,onMount){const bg=document.createElement('div');bg.className='sheet-bg';bg.innerHTML=`<div class="sheet"><button class="sx" aria-label="Chiudi">${I('x')}</button><div class="grab"></div>${html}</div>`;
  const remove=()=>bg.remove();const L=openLayer(remove);const close=()=>{if(!bg.isConnected)return;remove();closeLayer(L)};
  bg.addEventListener('click',e=>{if(e.target===bg)close()});bg.querySelector('.sx').onclick=close;document.body.appendChild(bg);onMount&&onMount(bg.firstChild,close);return close}
 function confirmBox(msg,yes,cb){sheet(`<h2 style="margin-top:0">${esc(msg)}</h2><div class="grid2"><button class="btn sec" data-n>Annulla</button><button class="btn danger" data-y>${esc(yes)}</button></div>`,(el,close)=>{el.querySelector('[data-n]').onclick=close;el.querySelector('[data-y]').onclick=()=>{close();cb()}})}
@@ -1585,7 +1586,9 @@ function tour(){if(document.querySelector('.tourbg'))return;const SL=[
   <div class="row" style="gap:8px"><button class="btn ghost" id="tsk">${i?'Indietro':'Salta'}</button><button class="btn" id="tnx">${i<SL.length-1?'Avanti':'Iniziamo!'}</button></div></div></div>`;
   bg.querySelector('#tsk').onclick=()=>{if(i){i--;draw()}else fin()};bg.querySelector('#tnx').onclick=()=>{if(i<SL.length-1){i++;draw()}else fin()}};
  const fin=()=>{bg.remove();S.tourDone=true;save()};draw()}
-function applyFont(){try{const k=S.fontK||1;document.getElementById('app').style.zoom=k;document.querySelectorAll('.sheet,.player').forEach(x=>x.style.zoom=k)}catch(e){}}
+function fitApp(){try{const a=document.getElementById('app');if(a)a.style.height=Math.max(window.innerHeight,document.documentElement.clientHeight)+'px'}catch(e){}}
+window.addEventListener('resize',fitApp);window.addEventListener('orientationchange',()=>setTimeout(fitApp,300));window.addEventListener('pageshow',fitApp);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(fitApp,100)});setTimeout(fitApp,0);
+function applyFont(){fitApp();try{const k=S.fontK||1;document.documentElement.style.setProperty('--fk',k);document.getElementById('app').style.zoom=''}catch(e){}}
 function render(){applyTheme();applyFont();if(S.name&&S.level&&S.locs&&!S.tourDone&&!document.querySelector('.tourbg'))setTimeout(tour,300);
  if(!S.name||!S.level){$('#tabs').style.display='none';return onboarding()}
  $('#tabs').style.display='';
@@ -1861,7 +1864,7 @@ let PL=null,wakeLock=null;
 async function keepAwake(on){try{if(on&&navigator.wakeLock)wakeLock=await navigator.wakeLock.request('screen');else if(wakeLock){wakeLock.release();wakeLock=null}}catch(e){}}
 function startPlayer(steps,meta){
  unlockAudio();keepAwake(true);COACH.prime();
- const el=document.createElement('div');el.className='player';el.style.zoom=S.fontK||1;document.body.appendChild(el);
+ const el=document.createElement('div');el.className='player';document.body.appendChild(el);
  PL={layer:openLayer(playerBack),mass:{},steps,meta,i:0,rem:steps[0].secs,paused:false,last:performance.now(),el,start:Date.now(),lastBeep:-1,halfDone:false,worked:0};
  el.innerHTML=`<div class="row between"><button class="chip" id="px" aria-label="Chiudi">${I('x')}</button><span class="small mu" id="plab" style="flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px"></span><div class="row" style="gap:6px">${hrChip('phr')}<button class="chip" id="pvoice" aria-label="Voce" style="padding:7px">${I(S.set.voice!==false?'vol':'voloff')}</button>${CAM_OK?`<button class="chip" id="pcam" aria-label="Fotocamera" style="padding:7px">${I('cam')}</button>`:''}<span class="small mu" id="pcount"></span></div></div>
  <div class="pbar" style="margin:10px 0"><i id="ppr"></i></div>
