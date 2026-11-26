@@ -611,7 +611,7 @@ const KEY='showtimefit_v1';
 const DEF=()=>({v:1,kadj:0,kadjLog:[],readyLog:[],deloadUntil:null,boostUntil:null,lastLoadCheck:null,chDone:[],tourDone:false,fontK:1,jolly:0,jollyUsed:[],body:null,spent:0,owned:['th-oro','of-bianca'],eqp:{theme:'th-oro',outfit:'of-bianca'},seenLv:1,favs:[],plans:[],sex:'m',sport:'',job:'',name:'',pain:{},ready:null,prof:{},calTime:'18:30',level:0,start:today(),tests:[],loc:'',locs:null,set:{sound:true,vib:true},calW:{},calLog:[],wk:[],pauses:[],meas:[],medals:{},dismissInstall:false,upd:0,mass:{lv:{},kg:{},log:[]},prot:{f:1.8,days:{},custom:[]}});
 let S=DEF();
 try{const raw=localStorage.getItem(KEY);if(raw)S={...DEF(),...JSON.parse(raw)}}catch(e){}
-function migrateLocs(){['kadjLog','readyLog','chDone','jollyUsed'].forEach(k=>S[k]=S[k]||[]);S.kadj=S.kadj||0;S.jolly=S.jolly||0;S.fontK=S.fontK||1;if(S.name&&S.tourDone===undefined)S.tourDone=true;S.owned=S.owned||['th-oro','of-bianca'];S.eqp=S.eqp||{theme:'th-oro',outfit:'of-bianca'};S.spent=S.spent||0;S.seenLv=S.seenLv||1;S.wplan=S.wplan||{};S.food=S.food||{meals:4,no:[],quick:true};S.shiftT=S.shiftT||{};S.favs=S.favs||[];S.plans=S.plans||[];S.pain=S.pain||{};S.prof=S.prof||{};if(S.prot&&!S.prot.goal)S.prot.goal='massa';if(S.name&&!S.sport){S.sport='calcio';S.job=S.job||'autista'}if(!S.locs&&S.name){S.locs=[{id:'giardini',n:'Giardini',ic:'home',eq:['tappetino','sedia','zaino','elastico']},{id:'saponara',n:'Saponara',ic:'home',eq:['tappetino','sedia','zaino','elastico','sbarra']},{id:'fuori',n:'Fuori casa',ic:'pin',eq:[]}]}if(S.locs&&S.locs.length&&!S.locs.some(l=>l.id===S.loc))S.loc=S.locs[0].id}
+function migrateLocs(){['kadjLog','readyLog','chDone','jollyUsed'].forEach(k=>S[k]=S[k]||[]);S.kadj=S.kadj||0;S.jolly=S.jolly||0;S.fontK=S.fontK||1;if(S.name&&S.tourDone===undefined)S.tourDone=true;S.owned=S.owned||['th-oro','of-bianca'];S.eqp=S.eqp||{theme:'th-oro',outfit:'of-bianca'};S.spent=S.spent||0;S.seenLv=S.seenLv||1;S.wplan=S.wplan||{};S.food=S.food||{meals:4,no:[],quick:true};S.shiftT=S.shiftT||{};S.skip=S.skip||{};S.favs=S.favs||[];S.plans=S.plans||[];S.pain=S.pain||{};S.prof=S.prof||{};if(S.prot&&!S.prot.goal)S.prot.goal='massa';if(S.name&&!S.sport){S.sport='calcio';S.job=S.job||'autista'}if(!S.locs&&S.name){S.locs=[{id:'giardini',n:'Giardini',ic:'home',eq:['tappetino','sedia','zaino','elastico']},{id:'saponara',n:'Saponara',ic:'home',eq:['tappetino','sedia','zaino','elastico','sbarra']},{id:'fuori',n:'Fuori casa',ic:'pin',eq:[]}]}if(S.locs&&S.locs.length&&!S.locs.some(l=>l.id===S.loc))S.loc=S.locs[0].id}
 migrateLocs();
 let dbRef=null,syncState='local',saveT=null,writing=false,pendingWrite=false;
 function save(){S.upd=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}clearTimeout(saveT);saveT=setTimeout(pushDb,1500)}
@@ -1026,7 +1026,7 @@ function buildSession(L,D,loc){
 function sessDone(mon){const o={};S.wk.filter(w=>monday(w.date)===mon&&/^sess[ABC]$/.test(w.focus)&&!w.partial).forEach(w=>{o[w.date]=w.focus.slice(4)});return o}
 function planWeek(mon){
  const days=[...Array(7)].map((_,i)=>addD(mon,i)),t=today();const dd=sessDone(mon);const doneSet=new Set(Object.values(dd));
- const free=days.filter(d=>d>=t&&!isCalcio(d)&&!dd[d]);const rem=['A','B','C'].filter(x=>!doneSet.has(x));
+ const free=days.filter(d=>d>=t&&!isCalcio(d)&&!dd[d]&&!((S.skip||{})[d]));const rem=['A','B','C'].filter(x=>!doneSet.has(x));
  let best=null,bs=-1e9;
  const k=Math.min(rem.length,free.length);
  const combos=(arr,n,st=0,cur=[],out=[])=>{if(cur.length===n){out.push(cur.slice());return out}for(let i=st;i<arr.length;i++){cur.push(arr[i]);combos(arr,n,i+1,cur,out);cur.pop()}return out};
@@ -1046,12 +1046,29 @@ function planWeek(mon){
   if(isCalcio(d)){res[d]={focus:'pre',why:'Oggi '+SP().w+': solo attivazione prima',calcio:true};return}
   const i=best?best.dset.indexOf(d):-1;
   if(i>=0){const x=best.ass[i];res[d]={focus:'sess'+x,why:isCalcio(addD(d,1))?'Domani '+SP().w+': sessione leggera per le parti che userai':'Programma della settimana'};return}
-  if(postNight(d))res[d]={focus:'mobilita',why:'Dopo il turno di notte: recupero e mobilità'};
+  if((S.skip||{})[d])res[d]={focus:'mobilita',why:'Sessione spostata: oggi solo mobilità leggera',skipped:true};
+  else if(postNight(d))res[d]={focus:'mobilita',why:'Dopo il turno di notte: recupero e mobilità'};
   else if(isCalcio(addD(d,-1)))res[d]={focus:'mobilita',why:'Ieri '+SP().w+': recupero e mobilità'};
   else res[d]={focus:'mobilita',why:d<t?'Riposo':'Riposo attivo: mobilità leggera',rest:true};
  });
  return res;
 }
+
+/* ---------- NON CE LA FACCIO OGGI ---------- */
+function cantSheet(fc){const d=today(),mon=monday(d),L=String(fc).slice(4);
+ S.skip=S.skip||{};const had=S.skip[d];S.skip[d]=1;const pw=planWeek(mon);if(!had)delete S.skip[d];
+ const to=Object.keys(pw).find(x=>x>d&&pw[x].focus==='sess'+L&&!pw[x].done);
+ const tm=to?(suggestTime(to,L)):'';
+ const lost=['A','B','C'].filter(x=>!Object.values(pw).some(v=>v.focus==='sess'+x));
+ sheet(`<h2 style="margin-top:0">Nessun problema</h2><p class="small mu" style="margin-top:-4px">Saltare un giorno ogni tanto non rovina niente. Scegli tu:</p>
+ ${to?`<button class="card row" id="cmv" style="width:100%;border:0;color:var(--tx);text-align:left;background:#fff;color:#552583">${I('cal','ic')}<div style="flex:1"><b>Sposta a ${GGL[dIdx(to)].toLowerCase()}${tm?' alle '+tm:''}</b><div class="small" style="opacity:.8">Primo giorno libero adatto${isCalcio(addD(to,1))?', con '+esc(SP().w)+' il giorno dopo: sarà più leggera':''}</div></div></button>`:`<div class="card small mu" style="padding:10px 12px">${I('info','ic')} Questa settimana i giorni liberi rimasti sono già occupati${lost.length?'':' da altre sessioni'}: la sessione ${esc(L)} la recuperi la prossima settimana, oppure fai la versione corta adesso.</div>`}
+ <button class="card row" id="csh" style="width:100%;border:0;color:var(--tx);text-align:left">${I('clock','ic gold')}<div style="flex:1"><b>Versione corta, adesso</b><div class="small mu">Solo i 3 esercizi principali, 2 serie ciascuno · circa 15′</div></div></button>
+ <button class="card row" id="cmb" style="width:100%;border:0;color:var(--tx);text-align:left">${I('refresh','ic gold')}<div style="flex:1"><b>Solo 10′ di mobilità</b><div class="small mu">Tieni viva la serie e sciogli la schiena</div></div></button>
+ ${lost.length&&!to?'':''}<div class="hint">${(S.icsDone||false)?'Se avevi salvato i promemoria nel calendario, rifai "Salva nel calendario" dalla Settimana.':'Il piano della settimana si sistema da solo.'}</div>`,(el,close)=>{
+  const q=x=>el.querySelector(x);
+  if(q('#cmv'))q('#cmv').onclick=()=>{S.skip[d]=1;const w=S.wplan&&S.wplan[mon];if(w&&tm){w.t=w.t||{};w.t[to]=tm}save();homeFocus=null;close();render();toast('Spostata a '+GGL[dIdx(to)].toLowerCase()+(tm?' alle '+tm:''))};
+  q('#csh').onclick=()=>{homeShort=today();close();render();scrollTo(0,0);toast('Versione corta pronta: tocca Inizia')};
+  q('#cmb').onclick=()=>{homeFocus='mobilita';durTouched=true;homeDur=10;close();render();scrollTo(0,0);toast('Mobilità da 10′ pronta')}})}
 
 /* ---------- FASCIA CARDIO ---------- */
 const HR={dev:null,ch:null,bpm:0,t:0,log:[],subs:[],busy:false,
@@ -1177,17 +1194,18 @@ function runFinish(){if(!RP)return;clearInterval(RP.timer);try{if(RP.watch!=null
 const SHIFTS={M:['Mattina','06:00','12:30'],P:['Pomeriggio','13:30','20:00'],S:['Sera','17:00','23:30'],N:['Notte','22:00','04:30'],G:['Giornata','09:00','17:00'],R:['Libero','','']};
 const SHORD=['R','M','P','S','N','G'];
 function shT(c){const o=(S.shiftT||{})[c];return o||[SHIFTS[c][1],SHIFTS[c][2]]}
-function shiftOf(d){const w=(S.wplan||{})[monday(d)];return w&&w.sh?w.sh[dIdx(d)]||null:null}
+function patSh(mon){const p=S.shiftPat;if(!p||!p.weeks||!p.weeks.length)return null;const n=p.weeks.length;const i=((Math.round(diffD(p.start,mon)/7)%n)+n)%n;return p.weeks[i]||null}
+function shiftOf(d){const mon=monday(d);const w=(S.wplan||{})[mon];const sh=w&&w.sh?w.sh:patSh(mon);return sh?sh[dIdx(d)]||null:null}
 function postNight(d){return shiftOf(addD(d,-1))==='N'}
 const hm=t=>{const [h,m]=String(t).split(':').map(Number);return h*60+(m||0)},mh=x=>String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');
 function blocksOf(d){const b=[];const c=shiftOf(d);if(c&&c!=='R'){const [a,e]=shT(c).map(hm);if(e>a)b.push([a-60,e+90]);else b.push([a-60,1440])}
  const p=shiftOf(addD(d,-1));if(p&&p!=='R'){const [a,e]=shT(p).map(hm);if(e<a)b.push([0,Math.max(e+90,13*60)])}
  if(isCalcio(d)){const st=sportTime(d);if(st){const x=hm(st);b.push([x-150,x+120])}}return b}
-function sportTime(d){const w=(S.wplan||{})[monday(d)];return w&&w.sportT||''}
+function sportTime(d){const w=(S.wplan||{})[monday(d)];return (w&&w.sportT)||S.sportTdef||''}
 function suggestTime(d,L){const dur=Math.max(40,(SESS[L]&&SESS[L].min||35)+10);const bl=blocksOf(d);const c=shiftOf(d);
  const eve=c==='M'||c==='G';const cand=(eve?['17:30','18:00','18:30','19:00','10:30','15:00','20:00']:['10:30','11:00','17:30','18:00','15:00','09:00','19:30','20:30']).map(hm);
  for(const x of cand){if(!bl.some(([a,e])=>x<e&&x+dur>a))return mh(x)}return ''}
-function planTime(d){const w=(S.wplan||{})[monday(d)];if(!w)return '';const p=planWeek(monday(d))[d];if(!p||!p.focus.startsWith('sess'))return '';return (w.t&&w.t[d])||suggestTime(d,p.focus.slice(4))}
+function planTime(d){const w=(S.wplan||{})[monday(d)];if(!w&&!patSh(monday(d)))return '';const p=planWeek(monday(d))[d];if(!p||!p.focus.startsWith('sess'))return '';return (w.t&&w.t[d])||suggestTime(d,p.focus.slice(4))}
 const SNACKS=[['Yogurt greco e una manciata di frutta secca',['latticini']],['Panino con bresaola e una mela',['carne']],['Panino con fesa di tacchino',['carne']],['Barretta proteica e una banana',[]],['Grana a scaglie e cracker integrali',['latticini']],['Uova sode (preparale la sera prima)',['uova']],['Panino con tonno',['pesce']],['Frutta secca e un frutto',[]]];
 const QUICK=[['Uova strapazzate e pane integrale','5 min',['uova']],['Petto di pollo a fette in padella con insalata in busta','10 min',['carne']],['Legumi in scatola con riso già cotto','5 min',[]],['Hamburger di manzo e patate al microonde','12 min',['carne','rossa']],['Bresaola, rucola e grana','2 min',['carne','latticini']],['Tonno, fagioli e cipolla','3 min',['pesce']],['Salmone in padella e riso basmati','12 min',['pesce']],['Fiocchi di latte, pomodori e pane','2 min',['latticini']],['Pasta con ragù di tacchino già pronto','12 min',['carne']],['Omelette con prosciutto cotto','8 min',['uova','carne']]];
 function foodOk(tags){const no=(S.food&&S.food.no)||[];return !tags.some(t=>no.includes(t)||(t==='rossa'&&no.includes('rossa')))}
@@ -1209,17 +1227,20 @@ function weekTips(mon){const w=(S.wplan||{})[mon]||{sh:[]};const sh=w.sh||[];con
  return out}
 function planWizard(mon0){S.wplan=S.wplan||{};S.food=S.food||{meals:4,no:[],quick:true};S.shiftT=S.shiftT||{};let mon=mon0||monday(today());let step=0;
  const prev=S.wplan[addD(mon,-7)];
- let W=JSON.parse(JSON.stringify(S.wplan[mon]||{sh:prev&&prev.sh?prev.sh.slice():Array(7).fill('R'),t:{},sportT:prev&&prev.sportT||'21:00'}));
+ const pat=patSh(mon);let W=JSON.parse(JSON.stringify(S.wplan[mon]||{sh:pat?pat.slice():prev&&prev.sh?prev.sh.slice():Array(7).fill('R'),t:{},sportT:S.sportTdef||prev&&prev.sportT||'21:00'}));
+ let cyc=S.shiftPat?S.shiftPat.weeks.length:0;
  let sport=(S.calW[mon]||[]).slice();
  const steps=SP().none?['work','plan','tips']:['work','sport','plan','tips'];
  const days=[...Array(7)].map((_,i)=>addD(mon,i));
- const commit=()=>{W.sh=W.sh.map(c=>c||'R');S.wplan[mon]=W;if(!SP().none)S.calW[mon]=sport.slice().sort();save()};
+ const commit=()=>{W.sh=W.sh.map(c=>c||'R');S.wplan[mon]=W;if(W.sportT)S.sportTdef=W.sportT;if(cyc){const old=S.shiftPat;const keep=old&&old.weeks.length===cyc;const start=keep?old.start:mon;const n=cyc;const i=((Math.round(diffD(start,mon)/7)%n)+n)%n;const weeks=keep?old.weeks.slice():Array(n).fill(null);weeks[i]=W.sh.slice();S.shiftPat={start,weeks}}else S.shiftPat=null;if(!SP().none)S.calW[mon]=sport.slice().sort();save()};
  sheet(`<div id="wz"></div>`,(el,close)=>{
   const draw=()=>{const k=steps[step];const head=`<div class="small gold">Pianifica la settimana · ${step+1} di ${steps.length}</div><div class="small dim" style="margin-bottom:2px">${fmt(mon)} – ${fmt(days[6])}</div>`;
    let h='';
    if(k==='work'){h=`<h2 style="margin:2px 0 4px">Il tuo lavoro</h2><p class="small mu" style="margin:0 0 8px">Tocca ogni giorno per cambiare il turno.</p>
     ${days.map((d,i)=>{const c=W.sh[i]||'R';const [a,b]=shT(c);return `<button class="dayrow" data-sh="${i}" style="width:100%;border:0;text-align:left;color:var(--tx);margin-bottom:6px"><div class="dname"><span class="small dim">${GG[i]}</span><b>${pd(d).getDate()}</b></div><div style="flex:1;min-width:0"><b class="${c==='R'?'dim':''}">${SHIFTS[c][0]}</b><div class="small dim">${c==='R'?'Niente lavoro':a+' – '+b}</div></div><span class="chip" style="pointer-events:none;padding:5px 9px">${I('refresh')}</span></button>`}).join('')}
     ${prev&&prev.sh?`<button class="chip" id="wcp" style="margin:2px 0 8px">${I('copy')} Come la settimana scorsa</button>`:''}
+    <div class="small gold" style="margin:6px 0 4px">${I('refresh','ic')} I turni si ripetono?</div><div class="chips" style="margin-bottom:6px">${[[0,'No'],[1,'Ogni settimana'],[2,'Ogni 2 sett.'],[3,'Ogni 3'],[4,'Ogni 4']].map(([n,l])=>`<button class="chip ${cyc===n?'on':''}" data-cy="${n}" style="padding:6px 10px">${l}</button>`).join('')}</div>
+    ${cyc>1?`<div class="hint" style="margin-top:0">Ciclo di ${cyc} settimane: questa è la settimana ${(()=>{const st=S.shiftPat&&S.shiftPat.weeks.length===cyc?S.shiftPat.start:mon;return ((Math.round(diffD(st,mon)/7)%cyc)+cyc)%cyc+1})()} di ${cyc}. ${S.shiftPat&&S.shiftPat.weeks.length===cyc&&S.shiftPat.weeks.filter(Boolean).length>=cyc?'Il ciclo è completo: le prossime settimane si compilano da sole.':'Inserisci anche le altre settimane del ciclo quando arrivano, poi si ripetono da sole.'}</div>`:cyc===1?'<div class="hint" style="margin-top:0">Le prossime settimane avranno già questi turni: dovrai solo confermare o cambiare un giorno.</div>':''}
     <button class="sect" id="wst" style="margin-top:4px"><span>Orari dei turni</span>${I('down')}</button><div id="wsto" style="display:none">${SHORD.filter(c=>c!=='R').map(c=>{const [a,b]=shT(c);return `<div class="grid2" style="align-items:end;margin-bottom:6px"><div><label>${SHIFTS[c][0]} dalle</label><input type="time" data-ta="${c}" value="${a}"></div><div><label>alle</label><input type="time" data-tb="${c}" value="${b}"></div></div>`}).join('')}</div>`}
    if(k==='sport'){h=`<h2 style="margin:2px 0 4px">Quando fai ${esc(SP().w)}?</h2><p class="small mu" style="margin:0 0 8px">Gare e allenamenti. In quei giorni niente sessione pesante.</p>
     <div class="chips" style="margin-bottom:10px">${days.map((d,i)=>`<button class="chip ${sport.includes(i)?'on':''}" data-sp="${i}" style="min-width:52px;justify-content:center;flex-direction:column;gap:0"><span>${GG[i]}</span><b>${pd(d).getDate()}</b></button>`).join('')}</div>
@@ -1237,6 +1258,7 @@ function planWizard(mon0){S.wplan=S.wplan||{};S.food=S.food||{meals:4,no:[],quic
    const last=step===steps.length-1;
    el.querySelector('#wz').innerHTML=head+h+`<div class="grid2" style="margin-top:12px">${step?`<button class="btn sec" id="wb">${I('chevl')} Indietro</button>`:`<button class="btn sec" id="wx">Annulla</button>`}${last?`<button class="btn" id="wok">${I('check')} Salva</button>`:`<button class="btn" id="wn">Avanti ${I('chev')}</button>`}</div>${last?`<button class="btn sec" id="wcal" style="margin-top:8px">${I('cal')} Salva e metti nel calendario</button>`:''}`;
    const q=s2=>el.querySelector(s2),qa=s2=>el.querySelectorAll(s2);
+   qa('[data-cy]').forEach(b=>b.onclick=()=>{cyc=+b.dataset.cy;draw()});
    qa('[data-sh]').forEach(b=>b.onclick=()=>{const i=+b.dataset.sh;const c=W.sh[i]||'R';W.sh[i]=SHORD[(SHORD.indexOf(c)+1)%SHORD.length];draw()});
    if(q('#wcp'))q('#wcp').onclick=()=>{W.sh=prev.sh.slice();draw()};
    if(q('#wst'))q('#wst').onclick=()=>{const o=q('#wsto');o.style.display=o.style.display==='none'?'block':'none'};
@@ -1269,7 +1291,7 @@ function icsWeek(mon){const pw=planWeek(mon);const ev=[];const two=n=>String(n).
  try{const blob=new Blob([ics],{type:'text/calendar'});const f=new File([blob],'showtime-fit-settimana.ics',{type:'text/calendar'});
   if(navigator.canShare&&navigator.canShare({files:[f]})&&/Android/i.test(navigator.userAgent)){navigator.share({files:[f],title:'Showtime Fit'}).catch(()=>{})}
   else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='showtime-fit-settimana.ics';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
-  toast(ev.length+' promemoria pronti per il calendario')}catch(e){toast('Non riesco a creare il file del calendario')}}
+  S.icsDone=true;save();toast(ev.length+' promemoria pronti per il calendario')}catch(e){toast('Non riesco a creare il file del calendario')}}
 
 /* ---------- sfide ---------- */
 const CHALLENGES=[
@@ -1459,7 +1481,7 @@ function testView(m,first){
  m.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mob=b.dataset.m;m.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b))});
  m.querySelectorAll('[data-inc],[data-dec]').forEach(b=>b.onclick=()=>{const id=b.dataset.inc||b.dataset.dec;const i=$('#t_'+id);const st=id==='plank'?5:1;i.value=Math.max(0,(+i.value||0)+(b.dataset.inc?st:-st))});
  const finish=(lv,t)=>{S.level=lv;if(t)S.tests.push(t);if(first)S.start=today();save();const nm=checkMedals();
-  m.innerHTML=`<div style="padding-top:40px;text-align:center"><div class="gold" style="font:700 22px 'Barlow Condensed',sans-serif">IL TUO LIVELLO</div><div style="font:700 64px 'Barlow Condensed',sans-serif">${['','PRINCIPIANTE','INTERMEDIO','AVANZATO'][lv]}</div>
+  m.innerHTML=`<div style="padding-top:40px;text-align:center"><div class="gold" style="font:700 22px 'Barlow Condensed',sans-serif">IL TUO LIVELLO</div><div style="font:700 clamp(34px,12vw,64px) 'Barlow Condensed',sans-serif;overflow-wrap:anywhere">${['','PRINCIPIANTE','INTERMEDIO','AVANZATO'][lv]}</div>
   <p class="mu">Il programma dura 8 settimane: base, costruzione, scarico e spinta finale. Poi rifai il test e riparti più forte.</p>${nm.length?`<p class="gold">${I('medal')} Medaglia: ${esc(nm.join(', '))}</p>`:''}<button class="btn" id="ok">Vai alla home</button></div>`;
   $('#ok').onclick=()=>{if(TL)closeLayer(TL);goTab('home')}};
  $('#calc').onclick=()=>{const p=+$('#t_push').value||0,q=+$('#t_squat').value||0,k=+$('#t_plank').value||0;
@@ -1469,26 +1491,32 @@ function testView(m,first){
 }
 
 /* ---------- HOME ---------- */
-let homeDur=20,homeFocus=null,durTouched=false;
+let homeDur=20,homeFocus=null,durTouched=false,homeShort=null;
+function shortify(st){const keepW=new Set();const ex=[];let warm=0;st.forEach((x,i)=>{if(x.type!=='work'&&x.type!=='set')return;if(x.phase==='warm'){if(warm<2){keepW.add(i);warm++}return}if(x.phase!=='main'||/^Velocità/.test(x.label||''))return;const id=x.ex.id;if(!ex.includes(id)){if(ex.length>=3)return;ex.push(id)}const n=[...keepW].filter(j=>st[j].ex.id===id&&st[j].phase==='main').length;if(n<2)keepW.add(i)});
+ const out=[];st.forEach((x,i)=>{if(keepW.has(i)){let j=i-1;const pre=[];while(j>=0&&st[j].type!=='work'&&st[j].type!=='set'){pre.unshift(st[j]);j--}out.push(...pre,x)}});return out}
+function bwHome(fc){const st=buildWorkout(fc,homeDur,S.loc);return homeShort===today()&&String(fc).startsWith('sess')?shortify(st):st}
 function vHome(m){
  if(!vHome.ran||vHome.ran!==today()){vHome.ran=today();setTimeout(()=>{const msgs=[];const j=jollyCheck();if(j)msgs.push('Giorno jolly usato per '+fmt(j)+': la serie continua');const ld=checkLoad();if(ld)msgs.push(ld.t==='deload'?'Settimana leggera anticipata: '+ld.why:'Acceleratore attivo: '+ld.why);const ca=adaptCalories();if(ca)msgs.push('Calorie '+(ca.d>0?'+':'')+ca.d+' kcal: '+ca.why);if(msgs.length){sheet(`<h2 style="margin-top:0">Aggiornamenti</h2>${msgs.map(t=>`<div class="card small" style="padding:10px 12px">${esc(t)}</div>`).join('')}<button class="btn" id="upok">Ok</button>`,(e,c)=>{e.querySelector('#upok').onclick=()=>{c();render()}})}},600)}
  const d=today(),pl=planFor(d),fc=homeFocus||pl.focus,F=FOCUS[fc];if(!durTouched)homeDur=F.mass?recDur():20;const ph=phaseOf();
  const st=streak(),wkSet=!!S.calW[monday(d)];
- const steps=buildWorkout(fc,homeDur,S.loc);const nEx=new Set(steps.filter(s=>(s.type==='work'||s.type==='set')&&s.phase==='main').map(s=>s.ex.id)).size;
+ const steps=bwHome(fc);const nEx=new Set(steps.filter(s=>(s.type==='work'||s.type==='set')&&s.phase==='main').map(s=>s.ex.id)).size;
  const lastT=S.tests[S.tests.length-1];const retest=lastT&&diffD(lastT.date,d)>=28;
  const doneToday=S.wk.some(w=>w.date===d);
  m.innerHTML=`<div class="row between"><span class="mu">${GGL[dIdx(d)]} ${fmt(d)}</span><div class="row"><span class="gold row" style="gap:4px">${I('flame')} ${st} ${st===1?'giorno':'giorni'}</span><button class="chip" id="set" aria-label="Impostazioni" style="padding:7px">${I('set')}</button></div></div>
  <h1 style="margin-top:8px">Ciao ${esc(S.name)}, ${G('pronto','pronta')} a muoverti?</h1>
  <div class="chips" style="margin-bottom:12px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px">${S.locs.map(l=>`<button class="chip ${S.loc===l.id?'on':''}" data-loc="${l.id}" style="flex:none">${I(l.ic||'home')} ${esc(l.n)}</button>`).join('')}<button class="chip" id="plm" style="flex:none" aria-label="Gestisci luoghi">${I('plus')} Luoghi</button></div>
- ${(()=>{const mon=monday(d),nx=addD(mon,7);const WP=S.wplan||{};const tgt=!WP[mon]?mon:(dIdx(d)>=5&&!WP[nx]?nx:null);if(!tgt)return '';return `<button class="card row" id="setw" data-mon="${tgt}" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('cal','ic gold')}<div style="flex:1"><b>Pianifica ${tgt===mon?'la settimana':'la prossima settimana'}</b><div class="small mu">Lavoro${SP().none?'':', '+esc(SP().w)}, allenamenti con orario e consigli</div></div>${I('chev')}</button>`})()}
+ ${(()=>{const mon=monday(d),nx=addD(mon,7);const WP=S.wplan||{};const tgt=!WP[mon]?mon:(dIdx(d)>=5&&!WP[nx]?nx:null);if(!tgt)return '';return `<button class="card row" id="setw" data-mon="${tgt}" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('cal','ic gold')}<div style="flex:1"><b>${patSh(tgt)?'Conferma':'Pianifica'} ${tgt===mon?'la settimana':'la prossima settimana'}</b><div class="small mu">${patSh(tgt)?'Turni già inseriti dal tuo schema: controlla e salva':'Lavoro'+(SP().none?'':', '+esc(SP().w))+', allenamenti con orario e consigli'}</div></div>${I('chev')}</button>`})()}
  ${(S.deloadUntil&&today()<=S.deloadUntil)?`<div class="note bad">${I('info','ic')} Settimana leggera fino al ${fmt(S.deloadUntil)}: meno serie, recuperi meglio.</div>`:boostOn()?`<div class="note okk">${I('bolt','ic')} Acceleratore attivo fino al ${fmt(S.boostUntil)}: sali di livello prima.</div>`:''}
  <div class="hero">
-  <div class="small" style="color:var(--gold)">Settimana ${progWeek()} di 8 · ${ph.n} · ${esc(pl.done&&!homeFocus?'già fatta oggi':pl.why)}${!homeFocus&&planTime(d)?' · alle '+planTime(d):''}</div>
+  <div class="small" style="color:var(--gold)">Settimana ${progWeek()} di 8 · ${ph.n} · ${esc(pl.done&&!homeFocus?'già fatta oggi':pl.why)}${!homeFocus&&!pl.done&&planTime(d)?' · alle '+planTime(d):''}</div>
   <div style="font:700 26px 'Barlow Condensed',sans-serif;margin:4px 0">${esc(F.n)}</div>
   <div class="small" style="color:#D9CCEF">${F.sess?esc(ph.d)+(noLegsToday()?' · niente gambe pesanti ('+SP().w+' vicino)':''):F.mass?'Serie da 8-15 fino quasi al limite · recupero 75″'+(noLegsToday()?' · niente gambe ('+SP().w+' vicino)':''):F.inj?'Dietro la coscia, inguine, caviglie e ginocchia · '+injWeek()+'/2 questa settimana':F.fixed?'Mobilità e attivazione per arrivare '+G('pronto','pronta')+' allo sport':nEx+' esercizi · '+LOCS[S.loc].n+' ('+LOCS[S.loc].d+')'}${doneToday?' · fatto oggi '+'✓':''}</div>
   <div class="chips" style="margin:12px 0 4px;gap:6px;${F.inj?'display:none':''}">${[10,20,30,45,60].map(x=>`<button class="chip wh ${homeDur===x?'on':''}" data-dur="${x}" style="padding:8px 11px;background:${homeDur===x?'#fff':'transparent'};border:1px solid ${F.mass&&recDur()===x?'#FDB927':'#8A6BBE'};color:${homeDur===x?'var(--pur)':'#fff'}">${x}′</button>`).join('')}</div>
   ${F.mass?`<div class="small" style="color:#F3CF73;margin-bottom:10px">${I('target','ic')} Consigliato per te: ${recDur()}′ · ${esc(recWhy())}</div>`:'<div style="height:8px"></div>'}
+  ${homeShort===today()&&String(fc).startsWith('sess')?`<div class="row" style="gap:8px;margin-bottom:8px"><span class="chip on" style="pointer-events:none">${I('clock')} Versione corta</span><button class="chip" id="shortx" style="background:transparent;color:#D9CCEF">Torna a quella intera</button></div>`:''}
   <button class="btn" id="start">${I('play')} Inizia · ${estMin(steps)} min</button>
+  ${String(fc).startsWith('sess')&&!pl.done&&homeShort!==today()?`<button class="chip" id="cant" style="margin-top:8px;background:transparent;color:#D9CCEF;width:100%;justify-content:center">Non ce la faccio oggi</button>`:''}
+  ${(S.skip||{})[d]&&!homeFocus?`<div class="small" style="color:#D9CCEF;margin-top:8px">${I('info','ic')} Hai spostato la sessione di oggi. <button class="chip" id="unskip" style="background:transparent;color:var(--gold);padding:2px 4px;display:inline-flex">Annulla</button></div>`:''}
   ${F.mass?`<button class="chip" id="scheda" style="margin-top:10px;background:rgba(255,255,255,.12);color:#fff;width:100%;justify-content:center">${I('list')} Vedi la scheda completa</button>`:''}
   <div class="row" style="flex-wrap:wrap;gap:4px 14px;margin-top:10px"><button class="chip" id="chg" style="background:transparent;color:#D9CCEF;padding:4px 0">${I('refresh')} Cambia tipo</button>${S.ready&&S.ready.date===today()?`<button class="chip" id="rdy" style="background:transparent;color:${S.ready.adj<0?'#F7C1C1':S.ready.adj>0?'#CFE8A9':'#D9CCEF'};padding:4px 0">${I('flame')} ${S.ready.adj<0?'Giornata da gestire':S.ready.adj>0?'Giornata top':'Giornata normale'}</button>`:''}<button class="chip" id="pain" style="background:transparent;color:${painOn().length?'#F7C1C1':'#D9CCEF'};padding:4px 0">${I('info')} ${painOn().length?'Fastidi: '+painOn().map(z=>z[1].toLowerCase()).join(', '):'Fastidi'}</button></div>
  </div>
@@ -1514,10 +1542,13 @@ function vHome(m){
  bindExRows(m);
  m.querySelectorAll('[data-loc]').forEach(b=>b.onclick=()=>{S.loc=b.dataset.loc;save();render()});
  $('#plm').onclick=placesSheet;
+ if($('#shortx'))$('#shortx').onclick=()=>{homeShort=null;render()};
+ if($('#unskip'))$('#unskip').onclick=()=>{delete S.skip[d];save();homeFocus=null;render();toast('Sessione di nuovo oggi')};
+ if($('#cant'))$('#cant').onclick=()=>cantSheet(fc);
  m.querySelectorAll('[data-dur]').forEach(b=>b.onclick=()=>{homeDur=+b.dataset.dur;durTouched=true;render()});
- $('#start').onclick=()=>{const go=()=>startPlayer(buildWorkout(fc,homeDur,S.loc),{kind:F.mass?'massa':'workout',focus:fc,dur:homeDur});
+ $('#start').onclick=()=>{const go=()=>startPlayer(bwHome(fc),{kind:F.mass?'massa':'workout',focus:fc,dur:homeDur});
   if(F.mass&&!(S.ready&&S.ready.date===today()))readySheet(mob=>{if(mob){homeFocus='mobilita';durTouched=true;homeDur=20;render();toast('Ok, oggi recupero: tocca Inizia');return}render();go()});else go()};
- if($('#scheda'))$('#scheda').onclick=()=>schedaSheet(buildWorkout(fc,homeDur,S.loc),F.n,homeDur);
+ if($('#scheda'))$('#scheda').onclick=()=>schedaSheet(bwHome(fc),F.n,homeDur);
  if($('#rdy'))$('#rdy').onclick=()=>readySheet(()=>render());
  $('#pain').onclick=painSheet;
  $('#prot').onclick=protSheet;
