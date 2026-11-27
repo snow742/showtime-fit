@@ -1703,6 +1703,7 @@ function vHome(m){
  m.innerHTML=`<div class="row between"><span class="mu">${GGL[dIdx(d)]} ${fmt(d)}</span><div class="row"><span class="gold row" style="gap:4px">${I('flame')} ${st} ${st===1?'giorno':'giorni'}</span><button class="chip" id="set" aria-label="Impostazioni" style="padding:7px">${I('set')}</button></div></div>
  <h1 style="margin-top:8px">Ciao ${esc(S.name)}, ${G('pronto','pronta')} a muoverti?</h1>
  <div class="chips" style="margin-bottom:12px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px">${S.locs.map(l=>`<button class="chip ${S.loc===l.id?'on':''}" data-loc="${l.id}" style="flex:none">${I(l.ic||'home')} ${esc(l.n)}</button>`).join('')}<button class="chip" id="plm" style="flex:none" aria-label="Gestisci luoghi">${I('plus')} Luoghi</button></div>
+ ${!S.wk.length&&progWeek()>1&&!S.noRestartAsk?`<div class="card" style="border:1px solid var(--gold)"><b>Inizi oggi?</b><div class="small mu" style="margin:2px 0 8px">Il programma risulta già alla settimana ${progWeek()} di 8. Se oggi è il tuo primo giorno, riparti dalla settimana 1.</div><div class="grid2"><button class="btn" id="rst1">Sì, settimana 1</button><button class="btn sec" id="rst0">No, lascia così</button></div></div>`:''}
  ${(()=>{const ws=weekSumDue();return ws?`<button class="card row" id="wsum" data-mon="${ws}" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px solid var(--gold)">${I('medal','ic gold')}<div style="flex:1"><b>Riepilogo della settimana</b><div class="small mu">Com'è andata e cosa fare la prossima</div></div>${I('chev')}</button>`:''})()}
  ${athDue()&&S.wk.length>=1?`<button class="card row" id="athq" style="width:100%;border:0;color:var(--tx);text-align:left">${I('bolt','ic gold')}<div style="flex:1"><b>${athLast()?'Rifai i test atletici':'Test atletici di partenza'}</b><div class="small mu">Salto, scatto 20 m, navetta, corsa 6′ · 20 minuti</div></div>${I('chev')}</button>`:''}
  ${(()=>{const mon=monday(d),nx=addD(mon,7);const WP=S.wplan||{};const tgt=!WP[mon]?mon:(dIdx(d)>=5&&!WP[nx]?nx:null);if(!tgt)return '';return `<button class="card row" id="setw" data-mon="${tgt}" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('cal','ic gold')}<div style="flex:1"><b>${patSh(tgt)?'Conferma':'Pianifica'} ${tgt===mon?'la settimana':'la prossima settimana'}</b><div class="small mu">${patSh(tgt)?'Turni già inseriti dal tuo schema: controlla e salva':'Lavoro'+(SP().none?'':', '+esc(SP().w))+', allenamenti con orario e consigli'}</div></div>${I('chev')}</button>`})()}
@@ -1764,6 +1765,8 @@ function vHome(m){
  if($('#chsh'))$('#chsh').onclick=chShare;
  if($('#weigh'))$('#weigh').onclick=measForm;
  if($('#runq'))$('#runq').onclick=runSheet;
+ if($('#rst1'))$('#rst1').onclick=()=>{S.start=monday(today());save();render();toast('Settimana 1 di 8: si parte!')};
+ if($('#rst0'))$('#rst0').onclick=()=>{S.noRestartAsk=1;save();render()};
  if($('#mtq'))$('#mtq').onclick=matchStart;
  if($('#wsum'))$('#wsum').onclick=()=>weekSheet($('#wsum').dataset.mon);
  if($('#athq'))$('#athq').onclick=athSheet;
@@ -2191,6 +2194,7 @@ function settings(){
  <label>Livello</label><div class="seg" id="slv">${['Principiante','Intermedio','Avanzato'].map((n,i)=>`<button data-l="${i+1}" class="${S.level===i+1?'on':''}">${n}</button>`).join('')}</div>
  <label>Sport e lavoro</label><button class="btn sec" id="sprof">${esc(SP().n)} · ${esc(JB().n)}</button>
  <label>Fascia cardio</label><button class="btn sec" id="shr">${I('heart')} ${HR.ch?esc(S.hrName||'Collegata'):S.hrName?esc(S.hrName)+' · non collegata':'Collega una fascia cardio'}</button>
+ <label>Programma di 8 settimane</label><button class="btn sec" id="srst">${I('refresh')} Ricomincia dalla settimana 1 · ora sei alla ${progWeek()}</button>
  <label>Luoghi e attrezzi</label><button class="btn sec" id="sloc">${I('pin')} I tuoi luoghi (${S.locs.length})</button>
  <label>Dimensione del testo</label><div class="seg" id="sfk">${[[1,'Normale'],[1.12,'Grande'],[1.25,'Molto grande']].map(([k,n])=>`<button data-fk="${k}" class="${(S.fontK||1)===k?'on':''}">${n}</button>`).join('')}</div>
  <button class="btn ghost" id="stour" style="margin-top:10px">${I('info')} Guida dell'app</button>
@@ -2209,6 +2213,7 @@ function settings(){
   el.querySelectorAll('[data-fk]').forEach(b=>b.onclick=()=>{S.fontK=+b.dataset.fk;save();applyFont();el.querySelectorAll('[data-fk]').forEach(x=>x.classList.toggle('on',x===b))});
   el.querySelector('#stour').onclick=()=>{close();tour()};
   el.querySelector('#sloc').onclick=()=>{close();placesSheet()};
+  el.querySelector('#srst').onclick=()=>confirmBox('Ricominciare il programma da oggi? Lo storico degli allenamenti resta.','Ricomincia',()=>{S.start=monday(today());save();close();render();toast('Programma ripartito: settimana 1 di 8')});
   el.querySelector('#shr').onclick=()=>{close();HR.ok()?hrSheet():hrHelp()};
   el.querySelector('#sprof').onclick=()=>{close();const L=openLayer(()=>render());profileSetup($('#main'),false,ok=>{closeLayer(L);render();if(ok)toast('Profilo aggiornato')})};
   el.querySelector('#sv').onclick=e=>{S.set.vib=!S.set.vib;e.currentTarget.classList.toggle('on',S.set.vib);vib(100)};
