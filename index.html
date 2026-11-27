@@ -150,7 +150,7 @@ check:'<path d="M5 12l5 5l10 -10"/>',
 plus:'<path d="M12 5l0 14"/><path d="M5 12l14 0"/>',
 flame:'<path d="M12 12c2 -2.96 0 -7 -1 -8c0 3.038 -1.773 4.741 -3 6c-1.226 1.26 -2 3.24 -2 5a6 6 0 1 0 12 0c0 -1.532 -1.056 -3.94 -2 -5c-1.786 3 -2.791 3 -4 2z"/>',
 wheel:'<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M12 14l0 7"/><path d="M10 12l-6.75 -2"/><path d="M14 12l6.75 -2"/>',
-heart:'<path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/>',run:'<path d="M13 4m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M4 17l5 1l.75 -1.5"/><path d="M15 21l0 -4l-4 -3l1 -6"/><path d="M7 12l0 -3l5 -1l3 3l3 1"/>',ball:'<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 7l4.76 3.45l-1.76 5.55h-6l-1.76 -5.55z"/><path d="M12 7v-4m3 13l2.5 3m-.74 -8.55l3.74 -1.45m-11.44 7.05l-2.56 2.95m.74 -8.55l-3.74 -1.45"/>',
+moon:'<path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"/>',heart:'<path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/>',run:'<path d="M13 4m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M4 17l5 1l.75 -1.5"/><path d="M15 21l0 -4l-4 -3l1 -6"/><path d="M7 12l0 -3l5 -1l3 3l3 1"/>',ball:'<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 7l4.76 3.45l-1.76 5.55h-6l-1.76 -5.55z"/><path d="M12 7v-4m3 13l2.5 3m-.74 -8.55l3.74 -1.45m-11.44 7.05l-2.56 2.95m.74 -8.55l-3.74 -1.45"/>',
 pin:'<path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"/>',
 clock:'<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 7v5l3 3"/>',
 medal:'<path d="M12 4v3m-4 -3v6m8 -6v6"/><path d="M12 18.5l-3 1.5l.5 -3.5l-2 -2l3 -.5l1.5 -3l1.5 3l3 .5l-2 2l.5 3.5z"/>',
@@ -1635,7 +1635,7 @@ function chShare(){const {c,v,done}=chState();const txt=`${S.name} ti sfida su S
 
 /* ---------- premi ---------- */
 const RANKS=[[1,'Rookie'],[3,'Titolare'],[6,'Capitano'],[10,'All-Star'],[15,'MVP'],[20,'Leggenda'],[30,'Hall of Fame']];
-function xpTotal(){let x=0;S.wk.forEach(w=>{x+=(w.min||0)*2+(w.partial?0:20)});x+=S.mass.log.reduce((a,l)=>a+l.reps.length*3,0);x+=S.pauses.length*10+S.calLog.length*15+Object.keys(S.medals).length*50;x+=cyclesDone()*300;return x}
+function xpTotal(){let x=(S.habDone||[]).length*30;S.wk.forEach(w=>{x+=(w.min||0)*2+(w.partial?0:20)});x+=S.mass.log.reduce((a,l)=>a+l.reps.length*3,0);x+=S.pauses.length*10+S.calLog.length*15+Object.keys(S.medals).length*50;x+=cyclesDone()*300;return x}
 function cyclesDone(){return Math.floor(Math.max(0,diffD(S.start,today()))/56)}
 function lvOf(x){let lv=1,need=100,acc=0;while(x>=acc+need){acc+=need;lv++;need=Math.round(100*Math.pow(lv,1.35))}return{lv,cur:x-acc,need}}
 function rankOf(lv){let r=RANKS[0][1];RANKS.forEach(([l,n])=>{if(lv>=l)r=n});return r}
@@ -1831,7 +1831,8 @@ function vHome(m){
  ${athDue()&&S.wk.length>=1?`<button class="card row" id="athq" style="width:100%;border:0;color:var(--tx);text-align:left">${I('bolt','ic gold')}<div style="flex:1"><b>${athLast()?'Rifai i test atletici':'Test atletici di partenza'}</b><div class="small mu">Salto, scatto 20 m, navetta, corsa 6′ · 20 minuti</div></div>${I('chev')}</button>`:''}
  ${(()=>{const mon=monday(d),nx=addD(mon,7);const WP=S.wplan||{};const tgt=!WP[mon]?mon:(dIdx(d)>=5&&!WP[nx]?nx:null);if(!tgt)return '';return `<button class="card row" id="setw" data-mon="${tgt}" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('cal','ic gold')}<div style="flex:1"><b>${patSh(tgt)?'Conferma':'Pianifica'} ${tgt===mon?'la settimana':'la prossima settimana'}</b><div class="small mu">${patSh(tgt)?'Turni già inseriti dal tuo schema: controlla e salva':'Lavoro'+(SP().none?'':', '+esc(SP().w))+', allenamenti con orario e consigli'}</div></div>${I('chev')}</button>`})()}
  ${(S.deloadUntil&&today()<=S.deloadUntil)?`<div class="note bad">${I('info','ic')} Settimana leggera fino al ${fmt(S.deloadUntil)}: meno serie, recuperi meglio.</div>`:boostOn()?`<div class="note okk">${I('bolt','ic')} Acceleratore attivo fino al ${fmt(S.boostUntil)}: sali di livello prima.</div>`:''}
- <div class="hero">
+ ${checkinCard()}
+ <div class="hero">${readyLine()}
   <div class="small" style="color:var(--gold)">Settimana ${progWeek()} di 8 · ${ph.n} · ${esc(pl.done&&!homeFocus?'già fatta oggi':pl.why)}${!homeFocus&&!pl.done&&planTime(d)?' · alle '+planTime(d):''}</div>
   <div style="font:700 26px 'Barlow Condensed',sans-serif;margin:4px 0">${esc(F.n)}</div>
   <div class="small" style="color:#D9CCEF">${F.sess?esc(ph.d)+(noLegsToday()?' · niente gambe pesanti ('+SP().w+' vicino)':''):F.mass?'Serie da 8-15 fino quasi al limite · recupero 75″'+(noLegsToday()?' · niente gambe ('+SP().w+' vicino)':''):F.inj?'Dietro la coscia, inguine, caviglie e ginocchia · '+injWeek()+'/2 questa settimana':F.fixed?'Mobilità e attivazione per arrivare '+G('pronto','pronta')+' allo sport':nEx+' esercizi · '+LOCS[S.loc].n+' ('+LOCS[S.loc].d+')'}${doneToday?' · fatto oggi '+'✓':''}</div>
@@ -1844,6 +1845,8 @@ function vHome(m){
   ${F.mass?`<div class="row" style="gap:8px;margin-top:10px"><button class="chip" id="scheda" style="background:rgba(255,255,255,.12);color:#fff;flex:1;justify-content:center">${I('list')} Vedi la scheda</button>${String(fc).startsWith('sess')?`<button class="chip" id="schedit" style="background:rgba(255,255,255,.12);color:#fff;flex:1;justify-content:center">${I('target')} Modifica${hasEdit(fc)?' ✓':''}</button>`:''}</div>`:''}
   <div class="row" style="flex-wrap:wrap;gap:4px 14px;margin-top:10px"><button class="chip" id="chg" style="background:transparent;color:#D9CCEF;padding:4px 0">${I('refresh')} Cambia tipo</button>${S.ready&&S.ready.date===today()?`<button class="chip" id="rdy" style="background:transparent;color:${S.ready.adj<0?'#F7C1C1':S.ready.adj>0?'#CFE8A9':'#D9CCEF'};padding:4px 0">${I('flame')} ${S.ready.adj<0?'Giornata da gestire':S.ready.adj>0?'Giornata top':'Giornata normale'}</button>`:''}<button class="chip" id="pain" style="background:transparent;color:${painOn().length?'#F7C1C1':'#D9CCEF'};padding:4px 0">${I('info')} ${painOn().length?'Fastidi: '+painOn().map(z=>z[1].toLowerCase()).join(', '):'Fastidi'}</button></div>
  </div>
+ ${habitsCard()}
+ ${eveningCard()}
  <div class="qrow">
   <button class="qcard" id="prot"><div class="row" style="gap:2px">${ring(kcalDay(),kcalTarget(),40)}${ring(protDay(),protTarget(),40)}</div><b>Alimentazione</b><span>${kcalTarget()?(kcalTarget()-kcalDay()>0?'mancano '+(kcalTarget()-kcalDay())+' kcal':'calorie ok'):'completa i dati'}</span></button>
   ${(()=>{const {c,v,done}=chState();return `<button class="qcard" id="chq"><div style="font:700 22px 'Barlow Condensed',sans-serif;color:${done?'var(--ok)':'var(--gold)'}">${v}/${c.goal}</div><div style="height:5px;background:var(--card2);border-radius:3px;margin:4px 0"><div style="width:${Math.round(v/c.goal*100)}%;height:100%;background:${done?'var(--ok)':'var(--gold)'};border-radius:3px"></div></div><b>Sfida</b><span>${esc(c.n)}</span></button>`})()}
@@ -1889,6 +1892,7 @@ function vHome(m){
  if($('#chsh'))$('#chsh').onclick=chShare;
  if($('#weigh'))$('#weigh').onclick=measForm;
  if($('#runq'))$('#runq').onclick=runSheet;
+ bindCheckin();bindHabits();if($('#eve'))$('#eve').onclick=eveningSheet;if($('#cinre'))$('#cinre').onclick=()=>{S.ready=null;save();render()};habCheck();
  if($('#rst1'))$('#rst1').onclick=()=>{S.start=monday(today());save();render();toast('Settimana 1 di 8: si parte!')};
  if($('#rst0'))$('#rst0').onclick=()=>{S.noRestartAsk=1;save();render()};
  if($('#mtq'))$('#mtq').onclick=matchStart;
@@ -2090,7 +2094,7 @@ function finishPlayer(partial){
  clearInterval(PL.timer);keepAwake(false);
  const min=Math.max(1,Math.round((Date.now()-PL.start)/60000));const meta=PL.meta;const el=PL.el;
  beep(1320,0.3);vib([200,100,200,100,300]);CAM.stop();COACH.say(partial?'Allenamento interrotto. Va bene lo stesso, ci rifacciamo la prossima volta.':'Finito! Grande lavoro, '+G('campione','campionessa')+'!',true);
- if(meta.kind==='pausa'){S.pauses.push(today());save();const nm=checkMedals();
+ if(meta.kind==='pausa'){S.pauses.push(today());save();setTimeout(habCheck,600);const nm=checkMedals();
   el.innerHTML=`<div style="margin:auto;text-align:center;width:100%"><div style="font:700 44px 'Barlow Condensed',sans-serif" class="gold">PAUSA FATTA</div><p class="mu">Il tuo corpo ringrazia. Ripetila durante la giornata.</p>${nm.length?`<p class="gold">${I('medal')} ${esc(nm.join(', '))}</p>`:''}<button class="btn" id="fin">Chiudi</button></div>`;
   el.querySelector('#fin').onclick=closePlayer;return}
  const ups=meta.kind==='massa'?applyMass(PL.mass):[];if(meta.kind==='massa')save();
@@ -2167,6 +2171,52 @@ function editScheda(fc,title){const E=sEdit(fc);
   q('#esadd').onclick=()=>exPicker(ids=>{const cur=bwHome(fc).filter(x=>x.phase==='main'&&x.ex).map(x=>x.ex.id);ids.forEach(id=>{const e=EXM[id];if(!e)return;if(cur.includes(id)){E.ds[id]=(E.ds[id]||0)+2;return}E.rm=E.rm.filter(x=>x!==id);if(!E.add.some(a=>a[0]===id))E.add.push([id,2,e.mode==='reps'?Math.max(6,Math.min(15,workAmt(e))):workAmt(e)])});save();draw()});
   if(q('#esrst'))q('#esrst').onclick=()=>confirmBox('Tornare alla scheda originale?','Ripristina',()=>{delete S.sEdit[fc];save();close();render();editScheda(fc,title)});
   q('#esok').onclick=()=>{close();render()}};draw()})}
+
+/* ---------- GIORNATA: check-in, abitudini, sera ---------- */
+function waterGoal(){const w=bodyW()||75;return Math.max(6,Math.min(12,Math.round(w*35/250)))}
+function waterN(d=today()){return (S.water||{})[d]||0}
+function pauseN(d=today()){return (S.pauses||[]).filter(x=>x===d).length}
+function pauseGoal(d=today()){const c=shiftOf(d);return c&&c!=='R'?2:1}
+function movedOn(d){return S.wk.some(w=>w.date===d)||S.calLog.some(c=>c.date===d)}
+function habits(d=today()){return [
+ {k:'water',ic:'💧',n:'Acqua',v:waterN(d),g:waterGoal(),txt:waterN(d)+' / '+waterGoal()+' bicchieri'},
+ {k:'pause',ic:JB().k==='autista'?'🚗':'⏸',n:JB().pause||'Pausa attiva',v:pauseN(d),g:pauseGoal(d),txt:pauseN(d)+' / '+pauseGoal(d)},
+ {k:'move',ic:'🔥',n:'Allenamento o '+(SP().none?'sport':SP().w),v:movedOn(d)?1:0,g:1,txt:movedOn(d)?'fatto':(planTime(d)?'alle '+planTime(d):'da fare')}]}
+function habPct(d=today()){const h=habits(d);return h.reduce((a,x)=>a+Math.min(1,x.v/x.g),0)/h.length}
+function habCheck(){const d=today();S.habDone=S.habDone||[];if(habPct(d)>=1&&!S.habDone.includes(d)){S.habDone.push(d);if(S.habDone.length>400)S.habDone.shift();save();vib([60,40,120]);beep(1320,0.2);toast('Anello chiuso! +30 XP')}}
+function dayDots(){const mon=monday(today()),hd=new Set(S.habDone||[]);return [...Array(7)].map((_,i)=>{const d=addD(mon,i);const full=hd.has(d),act=movedOn(d);const c=full?'var(--gold)':act?'#8A63C9':'#2E1A52';return `<div style="flex:1;text-align:center"><div style="width:26px;height:26px;border-radius:13px;margin:0 auto;background:${c};${d===today()?'outline:2px solid #fff;outline-offset:1px':''}"></div><div class="dim" style="font-size:10px;margin-top:3px">${GG[i]}</div></div>`}).join('')}
+function ringSVG(p,size=64){const r=size/2-6,c=2*Math.PI*r;return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Abitudini ${Math.round(p*100)}%"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#2E1A52" stroke-width="8"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${p>=1?'var(--ok)':'var(--gold)'}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(c*Math.min(1,p)).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/><text x="${size/2}" y="${size/2+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">${Math.round(Math.min(1,p)*100)}%</text></svg>`}
+function checkinCard(){if(S.ready&&S.ready.date===today())return '';const v=checkinCard.v||(checkinCard.v={sl:null,en:null,mu:null});
+ const row=(k,lab,opts)=>`<div class="small" style="color:#D9CCEF;margin:6px 0 4px">${lab}</div><div style="display:flex;gap:5px">${opts.map((o,i)=>`<button class="chip ${v[k]===i?'on':''}" data-ci="${k}" data-cv="${i}" style="flex:1;justify-content:center;padding:7px 2px;font-size:13px">${o}</button>`).join('')}</div>`;
+ return `<div class="card" id="cin" style="border:1px solid var(--gold)"><div class="row between"><b class="gold">${new Date().getHours()<12?'Buongiorno':'Ciao'}! Check-in di oggi</b><span class="small dim">10 secondi</span></div>
+ ${row('sl','Come hai dormito?',['😫 Male','🙂 Normale','😄 Bene'])}${row('en','Energia',['🪫 Bassa','🔋 Media','⚡ Alta'])}${row('mu','Muscoli',['🥵 Doloranti','😐 Un po\'','💪 Freschi'])}
+ <div class="small" style="color:#D9CCEF;margin:8px 0 4px">Qualche fastidio?</div><div class="chips">${ZONES.map(([k,n])=>`<button class="chip ${S.pain&&S.pain[k]?'on':''}" data-cz="${k}" style="padding:5px 9px;font-size:13px">${n}</button>`).join('')}</div>
+ <button class="btn" id="cinok" style="margin-top:10px" ${v.sl==null||v.en==null||v.mu==null?'disabled':''}>${I('check')} Fatto</button></div>`}
+function bindCheckin(){const c=document.getElementById('cin');if(!c)return;const v=checkinCard.v;
+ c.querySelectorAll('[data-ci]').forEach(b=>b.onclick=()=>{v[b.dataset.ci]=+b.dataset.cv;render()});
+ c.querySelectorAll('[data-cz]').forEach(b=>b.onclick=()=>{S.pain=S.pain||{};S.pain[b.dataset.cz]=!S.pain[b.dataset.cz];save();render()});
+ const ok=c.querySelector('#cinok');ok.onclick=()=>{const sc=(v.sl-1)+(v.en-1)+(v.mu-1);const adj=sc<=-2?-1:sc>=2?1:0;S.ready={date:today(),s:sc,adj,sl:v.sl,en:v.en,mu:v.mu};S.readyLog=(S.readyLog||[]).filter(r=>r.date!==today());S.readyLog.push({date:today(),adj});if(S.readyLog.length>30)S.readyLog.shift();save();checkinCard.v=null;
+  toast(adj<0?'Giornata da gestire: sessione più leggera':adj>0?'Giornata top: si spinge!':'Giornata normale: programma come previsto');if(sc<=-3)setTimeout(()=>confirmBox('Hai dormito male e sei stanco: oggi solo 15 minuti di mobilità?','Sì, mobilità',()=>{homeFocus='mobilita';durTouched=true;homeDur=15;render()}),400);render()}}
+function readyLine(){if(!(S.ready&&S.ready.date===today()))return '';const a=S.ready.adj;return `<div class="small" style="color:${a<0?'#F0997B':a>0?'var(--ok)':'#D9CCEF'};margin:-2px 0 6px">${a<0?'Check-in: giornata da gestire, una serie in meno':a>0?'Check-in: giornata top, una serie in più':'Check-in: giornata normale'} · <button class="chip" id="cinre" style="background:transparent;color:var(--gold);padding:0 2px;display:inline-flex;font-size:inherit">cambia</button></div>`}
+function habitsCard(){const d=today(),h=habits(d),p=habPct(d);
+ return `<div class="card" id="habc"><div class="row" style="gap:12px;align-items:center">${ringSVG(p)}<div style="flex:1;min-width:0"><b>Abitudini di oggi</b><div class="small mu">${p>=1?'Anello chiuso, grande!':'Chiudi l\'anello per +30 XP'}</div></div></div>
+ <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">${h.map(x=>`<div class="row" style="gap:8px;background:#22143B;border-radius:10px;padding:8px 10px"><span style="font-size:18px">${x.ic}</span><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(x.n)}</b><div class="small ${x.v>=x.g?'':'dim'}" style="${x.v>=x.g?'color:var(--ok)':''}">${esc(x.txt)}</div></div>${x.k==='water'?`<button class="chip" data-wm="-1" aria-label="Togli un bicchiere" style="padding:6px 11px">−</button><button class="chip on" data-wm="1" aria-label="Aggiungi un bicchiere" style="padding:6px 11px">+</button>`:x.k==='pause'?`<button class="chip ${x.v>=x.g?'':'on'}" id="habp" style="padding:6px 10px">${I('play')} 4′</button>`:x.v>=x.g?'<span style="color:var(--ok);font-size:18px">✓</span>':''}</div>`).join('')}</div>
+ <div style="display:flex;margin-top:12px">${dayDots()}</div><div class="small dim" style="text-align:center;margin-top:4px">oro = anello chiuso · viola = ti sei allenato</div></div>`}
+function bindHabits(){const c=document.getElementById('habc');if(!c)return;c.querySelectorAll('[data-wm]').forEach(b=>b.onclick=()=>{S.water=S.water||{};const d=today();S.water[d]=Math.max(0,waterN(d)+(+b.dataset.wm));const ks=Object.keys(S.water).sort();if(ks.length>60)delete S.water[ks[0]];save();if(+b.dataset.wm>0)vib(30);habCheck();render()});
+ const p=c.querySelector('#habp');if(p)p.onclick=()=>startPlayer(buildPausa(),{kind:'pausa'})}
+function eveningDue(){const h=new Date().getHours();return (h>=19||habPct()>=1)&&(S.eveSeen||'')!==today()}
+function eveningCard(){return eveningDue()?`<button class="card row" id="eve" style="width:100%;border:0;color:var(--tx);text-align:left;background:#2E1A52">${I('moon','ic gold')}<div style="flex:1"><b>Com'è andata oggi?</b><div class="small mu">Il resoconto della giornata e cosa c'è domani</div></div>${I('chev')}</button>`:''}
+function eveningSheet(){S.eveSeen=today();save();const d=today(),tm=addD(d,1);const wk=S.wk.filter(w=>w.date===d);const mins=wk.reduce((a,w)=>a+(w.min||0),0)+S.calLog.filter(c=>c.date===d).reduce((a,c)=>a+(c.min||0),0);
+ const xp=wk.reduce((a,w)=>a+(w.min||0)*2+(w.partial?0:20),0)+pauseN(d)*10+S.calLog.filter(c=>c.date===d).length*15+((S.habDone||[]).includes(d)?30:0);const h=habits(d),hd=h.filter(x=>x.v>=x.g).length;
+ let best='';Object.entries(S.exHist||{}).forEach(([id,a])=>{const t=a.find(x=>x.d===d);const prev=a.filter(x=>x.d<d).pop();if(t&&prev&&EXM[id]){const T=x=>(x.reps||[]).reduce((p,q)=>p+q,0);const df=T(t)-T(prev);if(df>0&&(!best||df>best[1]))best=[EXM[id].n,df,prev.d]}});
+ const p2=planFor(tm),F2=FOCUS[p2.focus];const tsport=isCalcio(tm);const tt=planTime(tm);
+ const verdict=hd===h.length?['Giornata piena!','var(--ok)']:mins?['Bella giornata','var(--gold)']:hd?['Giornata tranquilla','#D9CCEF']:['Giornata di pausa','#D9CCEF'];
+ sheet(`<div class="small gold">${GGL[dIdx(d)]} ${fmt(d)}</div><h2 style="margin:2px 0 10px">Com'è andata oggi?</h2>
+ <div class="grid2" style="grid-template-columns:repeat(3,minmax(0,1fr));text-align:center;margin-bottom:10px"><div class="stat" style="padding:8px"><b style="color:var(--gold)">${mins}′</b><span class="small mu">movimento</span></div><div class="stat" style="padding:8px"><b style="color:var(--gold)">${hd}/${h.length}</b><span class="small mu">abitudini</span></div><div class="stat" style="padding:8px"><b style="color:var(--gold)">+${xp}</b><span class="small mu">XP</span></div></div>
+ <div class="card" style="padding:10px 12px"><b style="color:${verdict[1]}">${verdict[0]}</b>${best?`<div class="small" style="color:#D9CCEF;margin-top:3px">${esc(best[0])}: ${best[1]} ripetizioni in più del ${fmt(best[2])}.</div>`:''}${h.filter(x=>x.v<x.g).map(x=>`<div class="small dim" style="margin-top:3px">• ${esc(x.n)}: ${esc(x.txt)}</div>`).join('')}</div>
+ <div class="card" style="padding:10px 12px"><b class="gold">Domani · ${GGL[dIdx(tm)].toLowerCase()}</b><div class="small" style="color:#D9CCEF;margin-top:3px">${tsport?esc(SP().n)+(sportTime(tm)?' alle '+sportTime(tm):'')+(p2.focus!=='pre'&&p2.focus!=='mobilita'?' · e '+esc(F2.n.toLowerCase()):''):esc(F2.n)+(tt?' alle '+tt:'')}${shiftOf(tm)&&shiftOf(tm)!=='R'?' · turno '+SHIFTS[shiftOf(tm)][0].toLowerCase()+' '+shT(shiftOf(tm)).join('-'):''}</div></div>
+ <div class="small gold" style="margin:10px 0 6px">La tua settimana</div><div style="display:flex">${dayDots()}</div>
+ <button class="btn" id="evok" style="margin-top:14px">${I('moon')} Buonanotte</button>`,(el,c)=>el.querySelector('#evok').onclick=()=>{c();render()})}
 
 /* ---------- STORICO PER ESERCIZIO ---------- */
 function exHist(id){const h=((S.exHist||{})[id]||[]).slice();const dates=new Set(h.map(x=>x.d));(S.mass.log||[]).forEach(l=>{if(l.ex===id&&!dates.has(l.date)){h.push({d:l.date,reps:l.reps||[],kg:l.kg||0});dates.add(l.date)}});return h.sort((a,b)=>a.d.localeCompare(b.d))}
