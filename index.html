@@ -100,6 +100,57 @@ label{font-size:13px;color:var(--mu);display:block;margin:10px 0 4px}
 .empty{color:var(--dim);text-align:center;padding:16px 8px;font-size:14px}
 .seg{display:flex;background:var(--card2);border-radius:12px;padding:3px}.seg button{flex:1;border:0;background:none;color:var(--mu);padding:9px 4px;border-radius:9px;font:600 14px Barlow,sans-serif}.seg button.on{background:var(--gold);color:#2A1A47}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--mu);margin:8px 2px}.legend i{display:inline-block;width:10px;height:10px;border-radius:5px;margin-right:5px;vertical-align:-1px}
+
+/* ===== NEON ===== */
+:root{--bg:#0B0614;--card:#140B24;--card2:#1F1238;--line:#33205F;--neo:#8A3FFC;--neo2:#B57BFF}
+html,body{background:#0B0614}
+main{background:radial-gradient(130% 55% at 50% -8%,rgba(138,63,252,.22),transparent 62%)}
+.card,.stat,.mcard,.qcard,.list-ex,.dayrow,.medal{border:1px solid var(--line);box-shadow:0 0 14px rgba(138,63,252,.10)}
+.hero{background:linear-gradient(160deg,#21103F 0%,#150B28 70%);border:1.5px solid var(--neo);box-shadow:0 0 22px rgba(138,63,252,.45),inset 0 0 20px rgba(138,63,252,.18)}
+h1{text-shadow:0 0 18px rgba(181,123,255,.35)}
+h2::before{content:'';display:inline-block;width:4px;height:17px;border-radius:2px;background:var(--neo2);box-shadow:0 0 8px var(--neo2);margin-right:9px;vertical-align:-2px}
+.btn{box-shadow:0 0 16px color-mix(in srgb,var(--gold) 50%,transparent)}
+.btn.sec,.btn.ghost,.btn.danger{box-shadow:none}
+.btn.sec{background:#1D1135;border:1px solid var(--line)}
+.chip{background:#1A0F2E;border:1px solid #2E1B55}
+.chip.on{border-color:transparent;box-shadow:0 0 12px color-mix(in srgb,var(--gold) 45%,transparent)}
+.btn,.chip,.qcard,.tile,.list-ex,.ctrl button,.ball,.tabs button,.card.row,.mrow[data-hx],.mrow[data-rd]{transition:transform .12s ease,box-shadow .2s ease,background .2s ease}
+.btn:active,.chip:active,.qcard:active,.tile:active,.list-ex:active,.ctrl button:active,.ball:active,button.card:active{transform:scale(.96)}
+.tabs{background:rgba(11,6,20,.9);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.tabs button.on{color:var(--gold)}
+.tabs button.on svg{filter:drop-shadow(0 0 6px var(--gold))}
+.tabs button{position:relative}
+.tabs button.on::after{content:'';position:absolute;top:-7px;left:30%;right:30%;height:3px;border-radius:2px;background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.sheet{background:#110920;border-top:1.5px solid var(--neo);box-shadow:0 -12px 40px rgba(138,63,252,.35)}
+.sheet-bg{background:rgba(5,2,12,.75);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.figbox{background:radial-gradient(70% 55% at 50% 92%,rgba(138,63,252,.45),transparent 70%),radial-gradient(60% 60% at 50% 30%,rgba(181,123,255,.10),transparent 70%),linear-gradient(180deg,#1B0F31,#110920);border:1px solid var(--line)}
+.figbox .fig{filter:drop-shadow(0 0 5px rgba(181,123,255,.35))}
+.player{background:radial-gradient(120% 45% at 50% 0%,rgba(138,63,252,.25),transparent 60%),#0B0614}
+.timer{text-shadow:0 0 22px color-mix(in srgb,var(--gold) 45%,transparent)}
+.cue{background:#1B1033;border:1px solid var(--neo);box-shadow:0 0 12px rgba(138,63,252,.35)}
+.pbar i{box-shadow:0 0 10px var(--gold)}
+.ctrl button{background:#1D1135;border:1px solid var(--line)}
+.ctrl button.big{border:0;box-shadow:0 0 22px color-mix(in srgb,var(--gold) 60%,transparent)}
+.stat b,.mcard b{text-shadow:0 0 12px color-mix(in srgb,var(--gold) 35%,transparent)}
+.medal.got .md{box-shadow:0 0 14px var(--gold)}
+.dayrow.today{outline:1.5px solid var(--gold);box-shadow:0 0 16px rgba(253,185,39,.25)}
+.qcard .ic{width:34px;height:34px;padding:7px;border-radius:11px;background:rgba(138,63,252,.18);box-shadow:inset 0 0 0 1px rgba(181,123,255,.25)}
+.toast{box-shadow:0 0 24px color-mix(in srgb,var(--gold) 55%,transparent)}
+input,select,textarea{background:#140B24;border-color:var(--line)}
+.todo-card{padding:4px 12px}
+.todo-card>button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-bottom:1px solid var(--line);color:var(--tx);padding:11px 0;text-align:left;font:inherit}
+.todo-card>button:last-child{border-bottom:0}
+.todo-card>button .ic{width:30px;height:30px;padding:6px;border-radius:10px;background:rgba(138,63,252,.18)}
+#main.enter>*{animation:rise .38s cubic-bezier(.2,.8,.2,1) both}
+#main.enter>*:nth-child(2){animation-delay:.03s}#main.enter>*:nth-child(3){animation-delay:.06s}#main.enter>*:nth-child(4){animation-delay:.09s}#main.enter>*:nth-child(5){animation-delay:.12s}#main.enter>*:nth-child(6){animation-delay:.15s}#main.enter>*:nth-child(7){animation-delay:.18s}#main.enter>*:nth-child(n+8){animation-delay:.21s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+#main.enter .ring-arc{animation:ring .9s .15s cubic-bezier(.2,.8,.2,1) both}
+@keyframes ring{from{stroke-dasharray:0 999}}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+.pop{animation:pop .35s ease}
+.sheet{animation:up .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(60px);opacity:.3}}
+@media (prefers-reduced-motion:reduce){#main.enter>*,.sheet,#main.enter .ring-arc{animation:none}}
 </style>
 </head>
 <body>
@@ -201,7 +252,7 @@ function capD(p1,r1,p2,r2){const dx=p2[0]-p1[0],dy=p2[1]-p1[1],Lh=Math.hypot(dx,
  return `M${f(a1[0])} ${f(a1[1])}L${f(a2[0])} ${f(a2[1])}A${r2} ${r2} 0 0 0 ${f(b2[0])} ${f(b2[1])}L${f(b1[0])} ${f(b1[1])}A${r1} ${r1} 0 0 0 ${f(a1[0])} ${f(a1[1])}Z`}
 function capP(p1,r1,p2,r2,fill){return `<path d="${capD(p1,r1,p2,r2)}" fill="${fill}"/>`}
 function shp(o,fill,st){if(o.k==='p')return `<path d="${o.d}" fill="${fill}"${st||''}/>`;if(o.k==='c')return `<circle cx="${o.x.toFixed(1)}" cy="${o.y.toFixed(1)}" r="${o.r}" fill="${fill}"${st||''}/>`;return `<ellipse cx="${o.x.toFixed(1)}" cy="${o.y.toFixed(1)}" rx="${o.rx}" ry="${o.ry}" transform="rotate(${o.a.toFixed(1)} ${o.x.toFixed(1)} ${o.y.toFixed(1)})" fill="${fill}"${st||''}/>`}
-function grp(list){const OL='#1B0F2E';let o='';list.forEach(x=>{if(!x.noOut)o+=shp(x,OL,` stroke="${OL}" stroke-width="1.5" stroke-linejoin="round"`)});list.forEach(x=>{o+=shp(x,x.f,x.line?` stroke="#1B0F2E" stroke-opacity="0.3" stroke-width="0.5"`:'')});return o}
+function grp(list){const OL='#26114D';let o='';list.forEach(x=>{if(!x.noOut)o+=shp(x,OL,` stroke="${OL}" stroke-width="1.5" stroke-linejoin="round"`)});list.forEach(x=>{o+=shp(x,x.f,x.line?` stroke="#1B0F2E" stroke-opacity="0.3" stroke-width="0.5"`:'')});return o}
 const PC=(p1,r1,p2,r2,f,extra)=>({k:'p',d:capD(p1,r1,p2,r2),f,...(extra||{})});
 const PCi=(c,r,f,extra)=>({k:'c',x:c[0],y:c[1],r,f,...(extra||{})});
 const PE=(c,rx,ry,a,f,extra)=>({k:'e',x:c[0],y:c[1],rx,ry,a,f,...(extra||{})});
@@ -1691,7 +1742,7 @@ function openLayer(fn){const L={fn};LAYERS.push(L);if(skipPop>0||pendClose>0)qPu
 function closeLayer(L){const i=LAYERS.indexOf(L);if(i<0)return;LAYERS.splice(i,1);if(pendClose++===0)queueMicrotask(()=>{const n=pendClose;pendClose=0;skipPop=1;clearTimeout(flushT);flushT=setTimeout(flushQ,800);try{history.go(-n)}catch(e){flushQ()}})}
 window.addEventListener('popstate',()=>{if(skipPop>0){clearTimeout(flushT);flushQ();return}const L=LAYERS.pop();if(L)L.fn()});
 let tabL=null;
-function goTab(k){if(k===TAB){render();return}if(TAB==='home'&&k!=='home'&&!tabL){tabL=openLayer(()=>{tabL=null;TAB='home';render()})}else if(k==='home'&&tabL){closeLayer(tabL);tabL=null}TAB=k;render()}
+function goTab(k){if(k===TAB){render();return}ENTER=1;if(TAB==='home'&&k!=='home'&&!tabL){tabL=openLayer(()=>{tabL=null;TAB='home';render()})}else if(k==='home'&&tabL){closeLayer(tabL);tabL=null}TAB=k;render()}
 function sheet(html,onMount){const bg=document.createElement('div');bg.className='sheet-bg';bg.innerHTML=`<div class="sheet"><button class="sx" aria-label="Chiudi">${I('x')}</button><div class="grab"></div>${html}</div>`;
  const remove=()=>bg.remove();const L=openLayer(remove);const close=()=>{if(!bg.isConnected)return;remove();closeLayer(L)};
  bg.addEventListener('click',e=>{if(e.target===bg)close()});bg.querySelector('.sx').onclick=close;document.body.appendChild(bg);onMount&&onMount(bg.firstChild,close);return close}
@@ -1711,7 +1762,8 @@ function tour(){if(document.querySelector('.tourbg'))return;const SL=[
 function fitApp(){try{const a=document.getElementById('app');if(a)a.style.height=Math.max(window.innerHeight,document.documentElement.clientHeight)+'px'}catch(e){}}
 window.addEventListener('resize',fitApp);window.addEventListener('orientationchange',()=>setTimeout(fitApp,300));window.addEventListener('pageshow',fitApp);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(fitApp,100)});setTimeout(fitApp,0);
 function applyFont(){fitApp();try{const k=S.fontK||1;document.documentElement.style.setProperty('--fk',k);document.getElementById('app').style.zoom=''}catch(e){}}
-function render(){applyTheme();applyFont();if(S.name&&S.level&&S.locs&&!S.tourDone&&!document.querySelector('.tourbg'))setTimeout(tour,300);
+let ENTER=1;
+function render(){applyTheme();applyFont();setTimeout(()=>{const m=document.getElementById('main');if(!m)return;if(ENTER){ENTER=0;m.classList.remove('enter');void m.offsetWidth;m.classList.add('enter');clearTimeout(render.et);render.et=setTimeout(()=>m.classList.remove('enter'),1200)}},0);if(S.name&&S.level&&S.locs&&!S.tourDone&&!document.querySelector('.tourbg'))setTimeout(tour,300);
  if(!S.name||!S.level){$('#tabs').style.display='none';return onboarding()}
  $('#tabs').style.display='';
  $('#tabs').innerHTML=TABS.map(([k,n,ic])=>`<button class="${TAB===k?'on':''}" data-tab="${k}">${I(ic)}${n}</button>`).join('');
@@ -1811,7 +1863,7 @@ function testView(m,first){
 }
 
 /* ---------- HOME ---------- */
-let homeDur=20,homeFocus=null,durTouched=false,homeShort=null;
+let TODO_X='';let homeDur=20,homeFocus=null,durTouched=false,homeShort=null;
 function shortify(st){const keepW=new Set();const ex=[];let warm=0;st.forEach((x,i)=>{if(x.type!=='work'&&x.type!=='set')return;if(x.phase==='warm'){if(warm<2){keepW.add(i);warm++}return}if(x.phase!=='main'||/^Velocità/.test(x.label||''))return;const id=x.ex.id;if(!ex.includes(id)){if(ex.length>=3)return;ex.push(id)}const n=[...keepW].filter(j=>st[j].ex.id===id&&st[j].phase==='main').length;if(n<2)keepW.add(i)});
  const out=[];st.forEach((x,i)=>{if(keepW.has(i)){let j=i-1;const pre=[];while(j>=0&&st[j].type!=='work'&&st[j].type!=='set'){pre.unshift(st[j]);j--}out.push(...pre,x)}});return out}
 function noJumps(st){if(confFor('jump')!==0)return st;const J=['jumpsquat','pogo','atterraggio'];const o=[];st.forEach(x=>{if(x.ex&&J.includes(x.ex.id)&&(x.type==='work'||x.type==='set'))return;o.push(x)});return o.filter((x,i)=>!((x.type==='rest'||x.type==='switch')&&o[i+1]&&(o[i+1].type==='rest'||o[i+1].type==='switch')))}
@@ -1827,9 +1879,6 @@ function vHome(m){
  <h1 style="margin-top:8px">Ciao ${esc(S.name)}, ${G('pronto','pronta')} a muoverti?</h1>
  <div class="chips" style="margin-bottom:12px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px">${S.locs.map(l=>`<button class="chip ${S.loc===l.id?'on':''}" data-loc="${l.id}" style="flex:none">${I(l.ic||'home')} ${esc(l.n)}</button>`).join('')}<button class="chip" id="plm" style="flex:none" aria-label="Gestisci luoghi">${I('plus')} Luoghi</button></div>
  ${!S.wk.length&&progWeek()>1&&!S.noRestartAsk?`<div class="card" style="border:1px solid var(--gold)"><b>Inizi oggi?</b><div class="small mu" style="margin:2px 0 8px">Il programma risulta già alla settimana ${progWeek()} di 8. Se oggi è il tuo primo giorno, riparti dalla settimana 1.</div><div class="grid2"><button class="btn" id="rst1">Sì, settimana 1</button><button class="btn sec" id="rst0">No, lascia così</button></div></div>`:''}
- ${(()=>{const ws=weekSumDue();return ws?`<button class="card row" id="wsum" data-mon="${ws}" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px solid var(--gold)">${I('medal','ic gold')}<div style="flex:1"><b>Riepilogo della settimana</b><div class="small mu">Com'è andata e cosa fare la prossima</div></div>${I('chev')}</button>`:''})()}
- ${athDue()&&S.wk.length>=1?`<button class="card row" id="athq" style="width:100%;border:0;color:var(--tx);text-align:left">${I('bolt','ic gold')}<div style="flex:1"><b>${athLast()?'Rifai i test atletici':'Test atletici di partenza'}</b><div class="small mu">Salto, scatto 20 m, navetta, corsa 6′ · 20 minuti</div></div>${I('chev')}</button>`:''}
- ${(()=>{const mon=monday(d),nx=addD(mon,7);const WP=S.wplan||{};const tgt=!WP[mon]?mon:(dIdx(d)>=5&&!WP[nx]?nx:null);if(!tgt)return '';return `<button class="card row" id="setw" data-mon="${tgt}" style="width:100%;border:0;color:var(--tx);text-align:left;border:1px dashed var(--gold)">${I('cal','ic gold')}<div style="flex:1"><b>${patSh(tgt)?'Conferma':'Pianifica'} ${tgt===mon?'la settimana':'la prossima settimana'}</b><div class="small mu">${patSh(tgt)?'Turni già inseriti dal tuo schema: controlla e salva':'Lavoro'+(SP().none?'':', '+esc(SP().w))+', allenamenti con orario e consigli'}</div></div>${I('chev')}</button>`})()}
  ${(S.deloadUntil&&today()<=S.deloadUntil)?`<div class="note bad">${I('info','ic')} Settimana leggera fino al ${fmt(S.deloadUntil)}: meno serie, recuperi meglio.</div>`:boostOn()?`<div class="note okk">${I('bolt','ic')} Acceleratore attivo fino al ${fmt(S.boostUntil)}: sali di livello prima.</div>`:''}
  ${checkinCard()}
  <div class="hero">${readyLine()}
@@ -1847,7 +1896,10 @@ function vHome(m){
  </div>
  ${habitsCard()}
  ${eveningCard()}
- <div class="qrow">
+ ${(()=>{TODO_X=` ${(()=>{const ws=weekSumDue();return ws?`<button id="wsum" data-mon="${ws}" >${I('medal','ic gold')}<div style="flex:1"><b>Riepilogo della settimana</b><div class="small mu">Com'è andata e cosa fare la prossima</div></div>${I('chev')}</button>`:''})()}
+ ${athDue()&&S.wk.length>=1?`<button id="athq" >${I('bolt','ic gold')}<div style="flex:1"><b>${athLast()?'Rifai i test atletici':'Test atletici di partenza'}</b><div class="small mu">Salto, scatto 20 m, navetta, corsa 6′ · 20 minuti</div></div>${I('chev')}</button>`:''}
+ ${(()=>{const mon=monday(d),nx=addD(mon,7);const WP=S.wplan||{};const tgt=!WP[mon]?mon:(dIdx(d)>=5&&!WP[nx]?nx:null);if(!tgt)return '';return `<button id="setw" data-mon="${tgt}" >${I('cal','ic gold')}<div style="flex:1"><b>${patSh(tgt)?'Conferma':'Pianifica'} ${tgt===mon?'la settimana':'la prossima settimana'}</b><div class="small mu">${patSh(tgt)?'Turni già inseriti dal tuo schema: controlla e salva':'Lavoro'+(SP().none?'':', '+esc(SP().w))+', allenamenti con orario e consigli'}</div></div>${I('chev')}</button>`})()}
+`;return ''})()} <div class="qrow">
   <button class="qcard" id="prot"><div class="row" style="gap:2px">${ring(kcalDay(),kcalTarget(),40)}${ring(protDay(),protTarget(),40)}</div><b>Alimentazione</b><span>${kcalTarget()?(kcalTarget()-kcalDay()>0?'mancano '+(kcalTarget()-kcalDay())+' kcal':'calorie ok'):'completa i dati'}</span></button>
   ${(()=>{const {c,v,done}=chState();return `<button class="qcard" id="chq"><div style="font:700 22px 'Barlow Condensed',sans-serif;color:${done?'var(--ok)':'var(--gold)'}">${v}/${c.goal}</div><div style="height:5px;background:var(--card2);border-radius:3px;margin:4px 0"><div style="width:${Math.round(v/c.goal*100)}%;height:100%;background:${done?'var(--ok)':'var(--gold)'};border-radius:3px"></div></div><b>Sfida</b><span>${esc(c.n)}</span></button>`})()}
   ${SP().none?'':`<button class="qcard" id="mtq" style="${S.liveMatch?'border:1px solid var(--gold)':''}">${I('ball','ic gold')}<b>${S.liveMatch?'Partita in corso':'Partitella live'}</b><span>${S.liveMatch?'tocca per riprendere':(()=>{const st=seasonStats();return st.n?st.n+' partite · '+st.gol+' gol':'gol, assist e battiti'})()}</span></button>`}
@@ -1862,7 +1914,7 @@ function vHome(m){
   if(S.prof&&S.prof.h&&(!m||diffD(m.date,today())>=7))todo.push(['weigh','ruler','Pesata della settimana']);
   if(!S.body)todo.push(['bqh','target','Questionario: cosa vuoi migliorare?']);
   if(!S.dismissInstall)todo.push(['inst','info','Mettila sul telefono come un\'app']);
-  return todo.length?`<div class="card" style="padding:4px 12px"><div class="small gold" style="padding-top:8px">Da fare</div>${todo.map(([id,ic,t])=>`<button class="todo" id="${id}">${I(ic,'ic gold')}<span style="flex:1">${t}</span>${I('chev','ic dim')}</button>`).join('')}</div>`:''})()}
+  return (todo.length||TODO_X.trim())?`<div class="card todo-card"><div class="small gold" style="padding-top:8px">Da fare</div>${TODO_X}${todo.map(([id,ic,t])=>`<button class="todo" id="${id}">${I(ic,'ic gold')}<span style="flex:1">${t}</span>${I('chev','ic dim')}</button>`).join('')}</div>`:''})()}
  <button class="sect" id="prevt"><span>${F.mass?'Esercizi di oggi e muscoli della settimana':'Esercizi di oggi'} <span class="dim">· ${nEx}</span></span>${I(S.homeOpen?'up':'down','ic')}</button>
  <div id="prev" style="display:${S.homeOpen?'block':'none'}"></div>`;
  const main=steps.filter(s=>(s.type==='work'||s.type==='set')&&(s.phase==='main'||F.fixed));const seen=new Set();const uniq=main.filter(s=>!seen.has(s.ex.id)&&seen.add(s.ex.id));
@@ -2185,7 +2237,7 @@ function habits(d=today()){return [
 function habPct(d=today()){const h=habits(d);return h.reduce((a,x)=>a+Math.min(1,x.v/x.g),0)/h.length}
 function habCheck(){const d=today();S.habDone=S.habDone||[];if(habPct(d)>=1&&!S.habDone.includes(d)){S.habDone.push(d);if(S.habDone.length>400)S.habDone.shift();save();vib([60,40,120]);beep(1320,0.2);toast('Anello chiuso! +30 XP')}}
 function dayDots(){const mon=monday(today()),hd=new Set(S.habDone||[]);return [...Array(7)].map((_,i)=>{const d=addD(mon,i);const full=hd.has(d),act=movedOn(d);const c=full?'var(--gold)':act?'#8A63C9':'#2E1A52';return `<div style="flex:1;text-align:center"><div style="width:26px;height:26px;border-radius:13px;margin:0 auto;background:${c};${d===today()?'outline:2px solid #fff;outline-offset:1px':''}"></div><div class="dim" style="font-size:10px;margin-top:3px">${GG[i]}</div></div>`}).join('')}
-function ringSVG(p,size=64){const r=size/2-6,c=2*Math.PI*r;return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Abitudini ${Math.round(p*100)}%"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#2E1A52" stroke-width="8"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${p>=1?'var(--ok)':'var(--gold)'}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(c*Math.min(1,p)).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/><text x="${size/2}" y="${size/2+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">${Math.round(Math.min(1,p)*100)}%</text></svg>`}
+function ringSVG(p,size=64){const r=size/2-6,c=2*Math.PI*r;return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Abitudini ${Math.round(p*100)}%"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#2E1A52" stroke-width="8"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${p>=1?'var(--ok)':'var(--gold)'}" stroke-width="8" stroke-linecap="round" class="ring-arc" stroke-dasharray="${(c*Math.min(1,p)).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/><text x="${size/2}" y="${size/2+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">${Math.round(Math.min(1,p)*100)}%</text></svg>`}
 function checkinCard(){if(S.ready&&S.ready.date===today())return '';const v=checkinCard.v||(checkinCard.v={sl:null,en:null,mu:null});
  const row=(k,lab,opts)=>`<div class="small" style="color:#D9CCEF;margin:6px 0 4px">${lab}</div><div style="display:flex;gap:5px">${opts.map((o,i)=>`<button class="chip ${v[k]===i?'on':''}" data-ci="${k}" data-cv="${i}" style="flex:1;justify-content:center;padding:7px 2px;font-size:13px">${o}</button>`).join('')}</div>`;
  return `<div class="card" id="cin" style="border:1px solid var(--gold)"><div class="row between"><b class="gold">${new Date().getHours()<12?'Buongiorno':'Ciao'}! Check-in di oggi</b><span class="small dim">10 secondi</span></div>
