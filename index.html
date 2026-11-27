@@ -151,6 +151,8 @@ input,select,textarea{background:#140B24;border-color:var(--line)}
 .sheet{animation:up .28s cubic-bezier(.2,.8,.2,1)}
 @keyframes up{from{transform:translateY(60px);opacity:.3}}
 @media (prefers-reduced-motion:reduce){#main.enter>*,.sheet,#main.enter .ring-arc{animation:none}}
+.done-hero{background:linear-gradient(160deg,#1E4A12 0%,#12300B 75%)!important;border:1.5px solid #97C459!important;box-shadow:0 0 22px rgba(151,196,89,.45),inset 0 0 18px rgba(151,196,89,.18)!important}
+.done-ck{width:48px;height:48px;border-radius:50%;background:#97C459;color:#12300B;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 0 16px rgba(151,196,89,.7)}.done-ck svg{width:28px;height:28px;stroke-width:3}
 </style>
 </head>
 <body>
@@ -1876,12 +1878,16 @@ function vHome(m){
  const lastT=S.tests[S.tests.length-1];const retest=lastT&&diffD(lastT.date,d)>=28;
  const doneToday=S.wk.some(w=>w.date===d);
  m.innerHTML=`<div class="row between"><span class="mu">${GGL[dIdx(d)]} ${fmt(d)}</span><div class="row"><span class="gold row" style="gap:4px">${I('flame')} ${st} ${st===1?'giorno':'giorni'}</span><button class="chip" id="set" aria-label="Impostazioni" style="padding:7px">${I('set')}</button></div></div>
- <h1 style="margin-top:8px">Ciao ${esc(S.name)}, ${G('pronto','pronta')} a muoverti?</h1>
+ <h1 style="margin-top:8px">${pl.done&&!homeFocus?'Ottimo lavoro oggi, '+esc(S.name)+'!':'Ciao '+esc(S.name)+', '+G('pronto','pronta')+' a muoverti?'}</h1>
  <div class="chips" style="margin-bottom:12px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px">${S.locs.map(l=>`<button class="chip ${S.loc===l.id?'on':''}" data-loc="${l.id}" style="flex:none">${I(l.ic||'home')} ${esc(l.n)}</button>`).join('')}<button class="chip" id="plm" style="flex:none" aria-label="Gestisci luoghi">${I('plus')} Luoghi</button></div>
  ${!S.wk.length&&progWeek()>1&&!S.noRestartAsk?`<div class="card" style="border:1px solid var(--gold)"><b>Inizi oggi?</b><div class="small mu" style="margin:2px 0 8px">Il programma risulta già alla settimana ${progWeek()} di 8. Se oggi è il tuo primo giorno, riparti dalla settimana 1.</div><div class="grid2"><button class="btn" id="rst1">Sì, settimana 1</button><button class="btn sec" id="rst0">No, lascia così</button></div></div>`:''}
  ${(S.deloadUntil&&today()<=S.deloadUntil)?`<div class="note bad">${I('info','ic')} Settimana leggera fino al ${fmt(S.deloadUntil)}: meno serie, recuperi meglio.</div>`:boostOn()?`<div class="note okk">${I('bolt','ic')} Acceleratore attivo fino al ${fmt(S.boostUntil)}: sali di livello prima.</div>`:''}
  ${checkinCard()}
- <div class="hero">${readyLine()}
+ ${pl.done&&!homeFocus?(()=>{const w=S.wk.filter(x=>x.date===d);const mins=w.reduce((a,x)=>a+(x.min||0),0);const tm=addD(d,1),p2=planFor(tm),F2=FOCUS[p2.focus],tt=planTime(tm),ts=isCalcio(tm);
+  return `<div class="hero done-hero"><div class="row" style="gap:12px"><div class="done-ck">${I('check')}</div><div style="flex:1;min-width:0"><div style="font:700 24px/1.05 'Barlow Condensed',sans-serif">Allenamento di oggi completato</div><div class="small" style="color:#CFE8A9;margin-top:2px">${mins?mins+' minuti · ':''}${esc(F.n)}</div></div></div>
+  <div style="background:rgba(0,0,0,.22);border-radius:12px;padding:10px 12px;margin-top:12px"><div style="font-weight:700">Attendi domani per il nuovo allenamento</div><div class="small" style="color:#D9F2C0;margin-top:2px">Domani: ${ts?esc(SP().n)+(sportTime(tm)?' alle '+sportTime(tm):''):esc(F2.n)+(tt?' alle '+tt:'')}</div></div>
+  <div class="row" style="gap:8px;margin-top:10px"><button class="chip" id="dextra" style="flex:1;justify-content:center;background:rgba(255,255,255,.12);color:#fff">${I('plus')} Allenamento extra</button>${eveningDue()?`<button class="chip" id="deve" style="flex:1;justify-content:center;background:rgba(255,255,255,.12);color:#fff">${I('moon')} Com'è andata</button>`:''}</div></div>`})():''}
+ <div class="hero" style="${pl.done&&!homeFocus?'display:none':''}">${readyLine()}
   <div class="small" style="color:var(--gold)">Settimana ${progWeek()} di 8 · ${ph.n} · ${esc(pl.done&&!homeFocus?'già fatta oggi':pl.why)}${!homeFocus&&!pl.done&&planTime(d)?' · alle '+planTime(d):''}</div>
   <div style="font:700 26px 'Barlow Condensed',sans-serif;margin:4px 0">${esc(F.n)}</div>
   <div class="small" style="color:#D9CCEF">${F.sess?esc(ph.d)+(noLegsToday()?' · niente gambe pesanti ('+SP().w+' vicino)':''):F.mass?'Serie da 8-15 fino quasi al limite · recupero 75″'+(noLegsToday()?' · niente gambe ('+SP().w+' vicino)':''):F.inj?'Dietro la coscia, inguine, caviglie e ginocchia · '+injWeek()+'/2 questa settimana':F.fixed?'Mobilità e attivazione per arrivare '+G('pronto','pronta')+' allo sport':nEx+' esercizi · '+LOCS[S.loc].n+' ('+LOCS[S.loc].d+')'}${doneToday?' · fatto oggi '+'✓':''}</div>
@@ -1944,7 +1950,7 @@ function vHome(m){
  if($('#chsh'))$('#chsh').onclick=chShare;
  if($('#weigh'))$('#weigh').onclick=measForm;
  if($('#runq'))$('#runq').onclick=runSheet;
- bindCheckin();bindHabits();if($('#eve'))$('#eve').onclick=eveningSheet;if($('#cinre'))$('#cinre').onclick=()=>{S.ready=null;save();render()};habCheck();
+ bindCheckin();bindHabits();if($('#dextra'))$('#dextra').onclick=()=>$('#chg').click();if($('#deve'))$('#deve').onclick=eveningSheet;if($('#eve'))$('#eve').onclick=eveningSheet;if($('#cinre'))$('#cinre').onclick=()=>{S.ready=null;save();render()};habCheck();
  if($('#rst1'))$('#rst1').onclick=()=>{S.start=monday(today());save();render();toast('Settimana 1 di 8: si parte!')};
  if($('#rst0'))$('#rst0').onclick=()=>{S.noRestartAsk=1;save();render()};
  if($('#mtq'))$('#mtq').onclick=matchStart;
@@ -2238,7 +2244,7 @@ function habPct(d=today()){const h=habits(d);return h.reduce((a,x)=>a+Math.min(1
 function habCheck(){const d=today();S.habDone=S.habDone||[];if(habPct(d)>=1&&!S.habDone.includes(d)){S.habDone.push(d);if(S.habDone.length>400)S.habDone.shift();save();vib([60,40,120]);beep(1320,0.2);toast('Anello chiuso! +30 XP')}}
 function dayDots(){const mon=monday(today()),hd=new Set(S.habDone||[]);return [...Array(7)].map((_,i)=>{const d=addD(mon,i);const full=hd.has(d),act=movedOn(d);const c=full?'var(--gold)':act?'#8A63C9':'#2E1A52';return `<div style="flex:1;text-align:center"><div style="width:26px;height:26px;border-radius:13px;margin:0 auto;background:${c};${d===today()?'outline:2px solid #fff;outline-offset:1px':''}"></div><div class="dim" style="font-size:10px;margin-top:3px">${GG[i]}</div></div>`}).join('')}
 function ringSVG(p,size=64){const r=size/2-6,c=2*Math.PI*r;return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Abitudini ${Math.round(p*100)}%"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#2E1A52" stroke-width="8"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${p>=1?'var(--ok)':'var(--gold)'}" stroke-width="8" stroke-linecap="round" class="ring-arc" stroke-dasharray="${(c*Math.min(1,p)).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/><text x="${size/2}" y="${size/2+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">${Math.round(Math.min(1,p)*100)}%</text></svg>`}
-function checkinCard(){if(S.ready&&S.ready.date===today())return '';const v=checkinCard.v||(checkinCard.v={sl:null,en:null,mu:null});
+function checkinCard(){if((S.ready&&S.ready.date===today())||S.wk.some(w=>w.date===today()))return '';const v=checkinCard.v||(checkinCard.v={sl:null,en:null,mu:null});
  const row=(k,lab,opts)=>`<div class="small" style="color:#D9CCEF;margin:6px 0 4px">${lab}</div><div style="display:flex;gap:5px">${opts.map((o,i)=>`<button class="chip ${v[k]===i?'on':''}" data-ci="${k}" data-cv="${i}" style="flex:1;justify-content:center;padding:7px 2px;font-size:13px">${o}</button>`).join('')}</div>`;
  return `<div class="card" id="cin" style="border:1px solid var(--gold)"><div class="row between"><b class="gold">${new Date().getHours()<12?'Buongiorno':'Ciao'}! Check-in di oggi</b><span class="small dim">10 secondi</span></div>
  ${row('sl','Come hai dormito?',['😫 Male','🙂 Normale','😄 Bene'])}${row('en','Energia',['🪫 Bassa','🔋 Media','⚡ Alta'])}${row('mu','Muscoli',['🥵 Doloranti','😐 Un po\'','💪 Freschi'])}
