@@ -441,7 +441,7 @@ const EX=[
  A:{h:[37,57],t:-90,hd:-90,a1:{ang:[-178,-92]},a2:{ang:[-176,-95]},l1:{ik:[41,96],b:[1,0]},l2:{ik:[39,96],b:[1,0]}},
  B:{h:[37,57],t:-90,hd:-90,a1:{ang:[-98,-93]},a2:{ang:[-96,-94]},l1:{ik:[41,96],b:[1,0]},l2:{ik:[39,96],b:[1,0]}},
  cueA:'Gomiti e polsi contro il muro, a forma di W',cueB:'Scivola su fino alla Y senza staccare le braccia',
- steps:['Schiena, testa e sedere contro il muro, piedi un passo avanti','Braccia a W: gomiti piegati, dorso delle mani al muro','Scivola su con le braccia senza staccarle dal muro','Torna giù lentamente stringendo le scapole'],
+ steps:['Schiena, testa e sedere contro un muro (o la fiancata dell\'auto), piedi un passo avanti','Braccia a W: gomiti piegati, dorso delle mani al muro','Scivola su con le braccia senza staccarle dal muro','Torna giù lentamente stringendo le scapole'],
  ok:['Zona lombare vicina al muro','Mento leggermente indietro'],err:['Schiena che si inarca','Braccia che si staccano dal muro'],easy:'Fai il movimento più piccolo, solo fin dove resti a contatto',hard:'Tieni 3 secondi in alto a ogni ripetizione'},
 {id:'pushwall',n:'Piegamenti al muro',cat:'sopra',req:[],lv:[1,1],mode:'reps',base:[8,10,12],tempo:3,m:{p:['chest','arms'],s:['del','core']},props:'wallR',
  A:{h:[62,60],t:-68,a1:{ik:[96,44],b:[0,1]},a2:{ik:[96,48],b:[0,1]},l1:{ik:[44,96],b:[1,0]},l2:{ik:[47,96],b:[1,0]}},
@@ -729,7 +729,7 @@ const FOCUS={
 const ROT=['calcio','prevenzione','gambe','completo'];
 const WARM=['skip','circ','rematore','hinge','squatlento','flessinpiedi','catcow'];
 const COOL=['flessori','flessinpiedi','polpacci','stretchfem','cobra','bambino','catcow'];
-const PAUSA=['chintuck','rematore','estensione','hinge','flessinpiedi','polpacci'];
+const PAUSA=['chintuck','wallangel','rematore','estensione','flessinpiedi','circ'];
 function pausaList(){const k=JB().kind;if(k===2)return['circ','estensione','hinge','stretchfem','polpacci','squatlento'];if(k===3)return['circ','rematore','estensione','stretchfem','flessinpiedi','chintuck'];return PAUSA}
 const MEAS=[['peso','Peso','kg','Al mattino, dopo il bagno, prima di mangiare'],['petto','Petto','cm','All\'altezza dei capezzoli, braccia giù, a fine espirazione'],['vita','Vita','cm','All\'altezza dell\'ombelico, pancia rilassata'],['fianchi','Fianchi','cm','Nel punto più largo dei glutei, piedi uniti'],['collo','Collo','cm','Sotto il pomo d\'Adamo'],['spalle','Spalle','cm','Giro completo nel punto più largo delle spalle'],['braccio','Braccio','cm','A metà tra spalla e gomito, braccio rilassato'],['avambraccio','Avambraccio','cm','Nel punto più largo, sotto il gomito'],['coscia','Coscia','cm','A metà tra anca e ginocchio, in piedi'],['polpaccio','Polpaccio','cm','Nel punto più largo, in piedi']];
 
@@ -1921,7 +1921,7 @@ function vHome(m){
   <button class="qcard" id="runq">${I('run','ic gold')}<b>Corsa</b><span>${(S.runs||[]).length?'ultima '+fmt(S.runs[S.runs.length-1].date):'ripetute, fondo, navette'}</span></button>
   ${!SP().legs?'':`<button class="qcard" id="injq"><div style="font:700 22px 'Barlow Condensed',sans-serif;color:${injWeek()>=2?'var(--ok)':'var(--gold)'}">${injWeek()}/2</div><b>Anti-infortunio</b><span>10′ · settimana ${progWeek()} di 8</span></button>`}
   <button class="qcard" id="postq">${I('heart','ic gold')}<b>Postura e schiena</b><span>~10′ senza sudare</span></button>
-  <button class="qcard" id="pausa">${I(JB().k==='autista'?'wheel':'clock','ic gold')}<b>${esc(JB().pause)}</b><span>4 min · ${JB().kind===2?'schiena e gambe':JB().kind===3?'schiena e spalle':'collo e schiena'}</span></button>
+  <button class="qcard" id="pausa">${I(JB().k==='autista'?'wheel':'clock','ic gold')}<b>${esc(JB().pause)}</b><span>4 min · ${JB().kind===2?'schiena e gambe':JB().kind===3?'schiena e spalle':'postura in piedi'}</span></button>
   ${SP().none?'':`<button class="qcard" id="calcio">${I('ball','ic gold')}<b>Registra ${esc(SP().w)}</b><span>gara o allenamento</span></button>`}
  </div>
  ${(()=>{const m=S.meas.filter(x=>x.peso).sort((a,b)=>a.date.localeCompare(b.date)).pop();const todo=[];
@@ -2207,7 +2207,7 @@ const POSTURA=[['catcow',30],['chintuck',30],['wallangel',10],['yraise',10],['bi
 function buildPostura(short){const st=[];const list=(short?[['chintuck',30],['wallangel',8],['birddog',6],['estensione',30]]:POSTURA).filter(([id])=>EXM[id]&&!blocked(EXM[id]));
  list.forEach(([id,a],i)=>{const e=EXM[id];st.push({type:'switch',ex:e,secs:5});st.push({type:'rest',secs:i?10:5,ex:e});
   if(e.mode==='reps')st.push({type:'work',ex:e,secs:Math.round(a*tempoOf(e))*(e.side?2:1),label:(short?'Postura · ':'')+e.n,phase:short?'post':'main',reps:a});else st.push({type:'work',ex:e,secs:a*(e.side?2:1),label:(short?'Postura · ':'')+e.n,phase:short?'post':'main',reps:0})});return st}
-function postSheet(){sheet(`<h2 style="margin-top:0">${I('heart','ic gold')} Postura e schiena</h2><p class="small mu" style="margin-top:-4px">10 minuti senza sudare: apri il petto, rinforzi la parte alta della schiena e sciogli anche e collo. Pensata per chi guida o sta seduto tanto.</p>
+function postSheet(){sheet(`<h2 style="margin-top:0">${I('heart','ic gold')} Postura e schiena</h2><p class="small mu" style="margin-top:-4px">10 minuti senza sudare, da fare a casa: apri il petto, rinforzi la parte alta della schiena e sciogli anche e collo.${JB().k==='autista'?' Durante il turno usa la '+esc(JB().pause)+': 4 minuti di postura in piedi, vicino all\'auto.':''}</p>
  ${POSTURA.map(([id,a],i)=>{const e=EXM[id];return e?`<div class="mrow"><span>${i+1}. ${esc(e.n)}</span><b>${e.mode==='reps'?a+' rip.'+(e.side?' /lato':''):a+'″'+(e.side?' /lato':'')}</b></div>`:''}).join('')}
  <button class="btn" id="psgo" style="margin-top:10px">${I('play')} Inizia · ${estMin(buildPostura())} min</button>
  <label class="row" style="gap:10px;margin-top:12px;align-items:center"><input type="checkbox" id="psadd" ${S.set.postAdd?'checked':''} style="width:22px;height:22px"><span class="small">Aggiungi 4 minuti di postura alla fine di ogni sessione A, B e C</span></label>
