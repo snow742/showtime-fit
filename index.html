@@ -1921,7 +1921,7 @@ function vHome(m){
   <button class="qcard" id="runq">${I('run','ic gold')}<b>Corsa</b><span>${(S.runs||[]).length?'ultima '+fmt(S.runs[S.runs.length-1].date):'ripetute, fondo, navette'}</span></button>
   ${!SP().legs?'':`<button class="qcard" id="injq"><div style="font:700 22px 'Barlow Condensed',sans-serif;color:${injWeek()>=2?'var(--ok)':'var(--gold)'}">${injWeek()}/2</div><b>Anti-infortunio</b><span>10′ · settimana ${progWeek()} di 8</span></button>`}
   <button class="qcard" id="postq">${I('heart','ic gold')}<b>Postura e schiena</b><span>${postDone()?'fatta oggi ✓':'~10′ senza sudare'}</span></button>
-  <button class="qcard" id="pausa">${I(JB().k==='autista'?'wheel':'clock','ic gold')}<b>${esc(JB().pause)}</b><span>4 min · ${JB().kind===2?'schiena e gambe':JB().kind===3?'schiena e spalle':'postura in piedi'}</span></button>
+  <button class="qcard" id="pausa">${I(JB().k==='autista'?'wheel':'clock','ic gold')}<b>${esc(JB().pause)}</b><span>${postCovers()?'oggi non serve: postura fatta ✓':'4 min · '+(JB().kind===2?'schiena e gambe':JB().kind===3?'schiena e spalle':'postura in piedi')}</span></button>
   ${SP().none?'':`<button class="qcard" id="calcio">${I('ball','ic gold')}<b>Registra ${esc(SP().w)}</b><span>gara o allenamento</span></button>`}
  </div>
  ${(()=>{const m=S.meas.filter(x=>x.peso).sort((a,b)=>a.date.localeCompare(b.date)).pop();const todo=[];
@@ -2207,6 +2207,7 @@ const POSTURA=[['catcow',30],['chintuck',30],['wallangel',10],['yraise',10],['bi
 function buildPostura(short){const st=[];const list=(short?[['chintuck',30],['wallangel',8],['birddog',6],['estensione',30]]:POSTURA).filter(([id])=>EXM[id]&&!blocked(EXM[id]));
  list.forEach(([id,a],i)=>{const e=EXM[id];st.push({type:'switch',ex:e,secs:5});st.push({type:'rest',secs:i?10:5,ex:e});
   if(e.mode==='reps')st.push({type:'work',ex:e,secs:Math.round(a*tempoOf(e))*(e.side?2:1),label:(short?'Postura · ':'')+e.n,phase:short?'post':'main',reps:a});else st.push({type:'work',ex:e,secs:a*(e.side?2:1),label:(short?'Postura · ':'')+e.n,phase:short?'post':'main',reps:0})});return st}
+function postCovers(d=today()){return postDone(d)||(S.set.postAdd&&S.wk.some(w=>w.date===d&&String(w.focus).startsWith('sess')&&!w.partial))}
 function postDone(d=today()){return S.wk.some(w=>w.date===d&&w.focus==='postura')}
 function postOffer(){sheet(`<div style="text-align:center"><div style="font-size:40px">🧘</div><h2 style="margin:4px 0">10 minuti di postura?</h2><p class="small mu">Adesso che sei caldo è il momento migliore: niente sudore, solo schiena, petto e anche. Puoi farla anche più tardi dalla Home.</p></div>
  <button class="btn" id="pon">${I('play')} Sì, adesso</button><button class="btn sec" id="plt" style="margin-top:8px">Più tardi</button>
@@ -2268,10 +2269,10 @@ function waterGoal(){const w=bodyW()||75;return Math.max(6,Math.min(12,Math.roun
 function waterN(d=today()){return (S.water||{})[d]||0}
 function pauseN(d=today()){return (S.pauses||[]).filter(x=>x===d).length}
 function pauseGoal(d=today()){const c=shiftOf(d);return c&&c!=='R'?2:1}
-function movedOn(d){return S.wk.some(w=>w.date===d)||S.calLog.some(c=>c.date===d)}
+function movedOn(d){return S.wk.some(w=>w.date===d&&w.focus!=='postura')||S.calLog.some(c=>c.date===d)}
 function habits(d=today()){return [
  {k:'water',ic:'💧',n:'Acqua',v:waterN(d),g:waterGoal(),txt:waterN(d)+' / '+waterGoal()+' bicchieri'},
- {k:'pause',ic:JB().k==='autista'?'🚗':'⏸',n:JB().pause||'Pausa attiva',v:pauseN(d),g:pauseGoal(d),txt:pauseN(d)+' / '+pauseGoal(d)},
+ postCovers(d)?{k:'pause',ic:'🧘',n:JB().pause||'Pausa attiva',v:1,g:1,txt:'non serve oggi: hai fatto la postura'}:{k:'pause',ic:JB().k==='autista'?'🚗':'⏸',n:JB().pause||'Pausa attiva',v:pauseN(d),g:pauseGoal(d),txt:pauseN(d)+' / '+pauseGoal(d)},
  {k:'move',ic:'🔥',n:'Allenamento o '+(SP().none?'sport':SP().w),v:movedOn(d)?1:0,g:1,txt:movedOn(d)?'fatto':(planTime(d)?'alle '+planTime(d):'da fare')}]}
 function habPct(d=today()){const h=habits(d);return h.reduce((a,x)=>a+Math.min(1,x.v/x.g),0)/h.length}
 function habCheck(){const d=today();S.habDone=S.habDone||[];if(habPct(d)>=1&&!S.habDone.includes(d)){S.habDone.push(d);if(S.habDone.length>400)S.habDone.shift();save();vib([60,40,120]);beep(1320,0.2);toast('Anello chiuso! +30 XP')}}
